@@ -1,0 +1,58 @@
+# ==============================================================================
+# .gitignore - Sistem Pendataan Tempat Ibadah Web
+# ==============================================================================
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# IDE, Editor & Tooling Configs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# Logs & Error Dumps
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node Modules & Package Manager Locks (jika ada tool tambahan)
+node_modules/
+.pnp
+.pnp.js
+
+# Build Outputs & Temporary Files
+dist/
+build/
+out/
+.cache/
+.temp/
+*.tmp
+*.temp
+
+# Environment & Secret Variables
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Local Development / Agent Artifacts
+.gemini/
+.agents/
+scratch/
