@@ -1,0 +1,1171 @@
+/**
+ * Sistem Informasi Pendataan Tempat Ibadah
+ * Bagian Kesejahteraan Sosial - Sekretariat Daerah Kabupaten Gresik
+ * Interactive Engine with Mandatory Kecamatan Gateway & Scoped District Export
+ */
+
+// Endpoint sinkronisasi data online (sumber data sistem pusat)
+const REMOTE_DATA_ENDPOINT = atob("aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvZS8yUEFDWC0xdlR0NXpuckZORk40QW9pR1R3OWJKYk1mczZYb0RRWF9OeDlfdmZ2MF9xbWN0NVg2Wl9uQU5JZUpGcG9IWmlYR0hfNkRNV0VMaG52YXdLVi9wdWI/Z2lkPTE3MzE1OTU5MTYmc2luZ2xlPXRydWUmb3V0cHV0PWNzdg==");
+
+const STORAGE_KEY_THEME = "tempat_ibadah_theme";
+const STORAGE_KEY_CACHE = "tempat_ibadah_cached_csv";
+const STORAGE_KEY_TIME = "tempat_ibadah_cached_time";
+
+// State Global
+const state = {
+  selectedKecamatan: null,       // null = Halaman Landing Pemilihan Kecamatan; string = Halaman Dashboard Kecamatan
+  landingSearchQuery: "",        // Pencarian nama kecamatan di halaman landing
+  rawHeaders: [],                // Header mentah CSV
+  rawRows: [],                   // Seluruh baris data se-Kabupaten Gresik
+  kecamatanSummaryList: [],      // Rangkuman 18 kecamatan beserta total & breakdown jenis
+  kecamatanAllRows: [],          // SELURUH data tempat ibadah pada kecamatan yang sedang dipilih (100% 1 kecamatan)
+  filteredRows: [],              // Data tempat ibadah hasil filter di layar (search/kategori/status)
+  currentPage: 1,
+  rowsPerPage: 25,
+  sortColIndex: -1,
+  sortAsc: true,
+  searchQuery: "",
+  filterJenisVal: "ALL",
+  filterStatusVal: "ALL",
+  jenisColIdx: -1,
+  kecamatanColIdx: -1,
+  statusColIdx: -1,
+  lastUpdated: null
+};
+
+/**
+ * Menghilangkan semua spasi yang ada di depan kata/kalimat pada data
+ * (Termasuk spasi biasa, tab, non-breaking space & spasi di awal setiap baris baru)
+ */
+function cleanLeadingSpaces(val) {
+  if (val === null || val === undefined) return "";
+  let str = val.toString();
+  // Hilangkan BOM atau karakter zero-width jika ada
+  str = str.replace(/^[\uFEFF\u200B]+/, "");
+  // Hilangkan spasi/tab/nbsp di depan setiap baris baru/kalimat
+  str = str.replace(/^[ \t\u00A0\r]+/gm, "");
+  // Hilangkan spasi di awal string
+  return str.trimStart();
+}
+
+// Robust CSV Parser (Menangani koma dalam kutip, baris baru/multiline di dalam sel)
+function parseCSV(csvText) {
+  if (!csvText) return [];
+  const cleanText = csvText.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const rows = [];
+  let currentRow = [];
+  let currentCell = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < cleanText.length; i++) {
+    const char = cleanText[i];
+    const nextChar = cleanText[i + 1];
+
+    if (inQuotes) {
+      if (char === '"' && nextChar === '"') {
+        currentCell += '"';
+        i++; // skip escaped quote
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        currentCell += char;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+      } else if (char === ',') {
+        currentRow.push(cleanLeadingSpaces(currentCell));
+        currentCell = "";
+      } else if (char === '\n') {
+        currentRow.push(cleanLeadingSpaces(currentCell));
+        if (currentRow.some(c => c.length > 0)) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        currentCell = "";
+      } else {
+        currentCell += char;
+      }
+    }
+  }
+
+  if (currentCell.length > 0 || currentRow.length > 0) {
+    currentRow.push(cleanLeadingSpaces(currentCell));
+    if (currentRow.some(c => c.length > 0)) {
+      rows.push(currentRow);
+    }
+  }
+
+  return rows;
+}
+
+// Inisialisasi Saat Dokumen Dimuat
+document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
+  initEventListeners();
+  bootstrapData();
+});
+
+// Setup Dark/Light Theme
+function initTheme() {
+  const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) || "light";
+  document.documentElement.setAttribute("data-theme", savedTheme);
+  updateThemeIcon(savedTheme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") || "light";
+  const newTheme = current === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", newTheme);
+  localStorage.setItem(STORAGE_KEY_THEME, newTheme);
+  updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+  const btn = document.getElementById("themeToggleBtn");
+  if (!btn) return;
+  if (theme === "dark") {
+    btn.innerHTML = `
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+    `;
+    btn.setAttribute("title", "Ubah ke Mode Terang");
+  } else {
+    btn.innerHTML = `
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+    `;
+    btn.setAttribute("title", "Ubah ke Mode Gelap");
+  }
+}
+
+// Inisialisasi Kontrol UI & Event Listener
+function initEventListeners() {
+  // 1. Kontrol Landing Page: Pencarian Kecamatan
+  const landingSearch = document.getElementById("landingKecamatanSearch");
+  const landingClear = document.getElementById("landingKecamatanClear");
+
+  if (landingSearch) {
+    landingSearch.addEventListener("input", (e) => {
+      state.landingSearchQuery = e.target.value.trim().toLowerCase();
+      if (landingClear) {
+        landingClear.style.display = state.landingSearchQuery ? "flex" : "none";
+      }
+      renderLandingKecamatan();
+    });
+  }
+
+  if (landingClear) {
+    landingClear.addEventListener("click", () => {
+      landingSearch.value = "";
+      state.landingSearchQuery = "";
+      landingClear.style.display = "none";
+      renderLandingKecamatan();
+      landingSearch.focus();
+    });
+  }
+
+  // 2. Tombol Ganti Kecamatan (Kembali ke Landing)
+  const changeKecBtn = document.getElementById("changeKecamatanBtn");
+  if (changeKecBtn) {
+    changeKecBtn.addEventListener("click", () => {
+      showLandingPage();
+    });
+  }
+
+  // 3. Kontrol Tabel Dashboard: Pencarian Instan di Kecamatan Terpilih
+  const searchInput = document.getElementById("searchInput");
+  const clearBtn = document.getElementById("searchClearBtn");
+
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      state.searchQuery = e.target.value.trim().toLowerCase();
+      if (clearBtn) {
+        clearBtn.style.display = state.searchQuery ? "flex" : "none";
+      }
+      state.currentPage = 1;
+      applyFilters();
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      searchInput.value = "";
+      state.searchQuery = "";
+      clearBtn.style.display = "none";
+      state.currentPage = 1;
+      applyFilters();
+      searchInput.focus();
+    });
+  }
+
+  // 4. Dropdown Filter Jenis & Status di Dashboard
+  const categoryFilter = document.getElementById("categoryFilterSelect");
+  if (categoryFilter) {
+    categoryFilter.addEventListener("change", (e) => {
+      state.filterJenisVal = e.target.value;
+      state.currentPage = 1;
+      applyFilters();
+    });
+  }
+
+  const statusFilter = document.getElementById("statusFilterSelect");
+  if (statusFilter) {
+    statusFilter.addEventListener("change", (e) => {
+      state.filterStatusVal = e.target.value;
+      state.currentPage = 1;
+      applyFilters();
+    });
+  }
+
+  // 5. Dropdown Baris per Halaman
+  const rowsPerPageSelect = document.getElementById("rowsPerPageSelect");
+  if (rowsPerPageSelect) {
+    rowsPerPageSelect.addEventListener("change", (e) => {
+      const val = e.target.value;
+      state.rowsPerPage = val === "ALL" ? Infinity : parseInt(val, 10);
+      state.currentPage = 1;
+      renderTable();
+    });
+  }
+
+  // 6. Tombol Refresh / Sinkronisasi Online
+  const refreshBtn = document.getElementById("refreshBtn");
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", () => {
+      syncOnlineData(true);
+    });
+  }
+
+  // 7. Toggle Theme
+  const themeBtn = document.getElementById("themeToggleBtn");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", toggleTheme);
+  }
+
+  // 8. Tombol Ekspor (PASTI 1 KECAMATAN PENUH)
+  const exportExcelBtn = document.getElementById("exportExcelBtn");
+  if (exportExcelBtn) {
+    exportExcelBtn.addEventListener("click", exportToExcel);
+  }
+
+  const exportCsvBtn = document.getElementById("exportCsvBtn");
+  if (exportCsvBtn) {
+    exportCsvBtn.addEventListener("click", exportToCSV);
+  }
+}
+
+// Memuat Data Pertama Kali (Instan, Bebas CORS & Offline-First)
+function bootstrapData() {
+  const cachedCSV = localStorage.getItem(STORAGE_KEY_CACHE);
+  const cachedTime = localStorage.getItem(STORAGE_KEY_TIME);
+  const initialCSV = window.INITIAL_DATABASE_CSV || "";
+
+  // Hitung perkiraan baris data untuk menentukan mana versi yang lebih lengkap/terbaru
+  const cachedLines = cachedCSV ? (cachedCSV.match(/\n/g) || []).length : 0;
+  const initialLines = initialCSV ? (initialCSV.match(/\n/g) || []).length : 0;
+
+  let rawCSV = "";
+  // Jika file lokal (initialCSV) memiliki baris lebih banyak atau sama (misal ada data baru seperti Sukarto 1.128)
+  if (initialLines >= cachedLines && initialCSV.length > 500) {
+    rawCSV = initialCSV;
+    localStorage.setItem(STORAGE_KEY_CACHE, initialCSV);
+    if (window.INITIAL_DATABASE_TIME) {
+      state.lastUpdated = new Date(window.INITIAL_DATABASE_TIME);
+    } else if (cachedTime) {
+      state.lastUpdated = new Date(cachedTime);
+    } else {
+      state.lastUpdated = new Date();
+    }
+    localStorage.setItem(STORAGE_KEY_TIME, state.lastUpdated.toISOString());
+  } else if (cachedCSV && cachedCSV.length > 500) {
+    rawCSV = cachedCSV;
+    if (cachedTime) state.lastUpdated = new Date(cachedTime);
+    else state.lastUpdated = new Date();
+  } else if (initialCSV) {
+    rawCSV = initialCSV;
+    state.lastUpdated = window.INITIAL_DATABASE_TIME ? new Date(window.INITIAL_DATABASE_TIME) : new Date();
+  }
+
+  // 1. Tampilkan data awal seketika agar tidak ada layar putih / lag (0 detik)
+  if (rawCSV) {
+    loadCSVToState(rawCSV);
+    updateBannerMetrics();
+    const isFileProtocol = window.location.protocol === "file:";
+    updateStatus("active", isFileProtocol ? `Data Aktif (${state.rawRows.length.toLocaleString("id-ID")} Data)` : `Terhubung (${state.rawRows.length.toLocaleString("id-ID")} Data)`);
+  } else {
+    updateStatus("loading", "Menghubungkan data...");
+  }
+
+  // 2. OTOMATIS: Langsung tarik data terbaru dari Google Sheets detik itu juga
+  syncOnlineData(false);
+
+  // 3. OTOMATIS: Cek pembaruan berkala setiap 3 menit di latar belakang
+  setInterval(() => {
+    syncOnlineData(false);
+  }, 3 * 60 * 1000);
+}
+
+// Parsing dan Masukkan ke State
+function loadCSVToState(csvContent) {
+  const parsed = parseCSV(csvContent);
+  if (!parsed || parsed.length <= 1) return false;
+
+  // Bersihkan semua spasi di depan kata/kalimat pada seluruh kolom dan baris
+  state.rawHeaders = parsed[0].map(h => cleanLeadingSpaces(h).trim());
+  state.rawRows = parsed.slice(1).map(row => row.map(cell => cleanLeadingSpaces(cell)));
+
+  detectKeyColumns();
+  computeKecamatanSummaries();
+
+  // Update metrik ringkasan di landing hero
+  const totalLandingEl = document.getElementById("landingTotalTempatIbadah");
+  if (totalLandingEl) {
+    totalLandingEl.textContent = `${state.rawRows.length.toLocaleString("id-ID")} Tempat Ibadah`;
+  }
+
+  renderLandingKecamatan();
+
+  // Jika user sudah berada di dashboard kecamatan tertentu, refresh datanya
+  if (state.selectedKecamatan) {
+    state.kecamatanAllRows = state.rawRows.filter(row => {
+      const val = (row[state.kecamatanColIdx] || "").trim().toUpperCase();
+      return val === state.selectedKecamatan.toUpperCase();
+    });
+    populateCategoryDropdownForSelectedKecamatan();
+    applyFilters();
+  }
+
+  setLoadingState(false);
+  return true;
+}
+
+// Deteksi Kolom-Kolom Kunci
+function detectKeyColumns() {
+  state.jenisColIdx = state.rawHeaders.findIndex(h => /jenis|lembaga/i.test(h));
+  state.kecamatanColIdx = state.rawHeaders.findIndex(h => /kecamatan/i.test(h));
+  state.statusColIdx = state.rawHeaders.findIndex(h => /apakah sudah terisi|lengkap/i.test(h));
+}
+
+// Hitung Rangkuman 18 Kecamatan Gresik Secara Dinamis
+function computeKecamatanSummaries() {
+  if (state.kecamatanColIdx === -1 || state.rawRows.length === 0) {
+    state.kecamatanSummaryList = [];
+    return;
+  }
+
+  const map = {};
+
+  state.rawRows.forEach(row => {
+    let kec = (row[state.kecamatanColIdx] || "").trim().toUpperCase();
+    if (!kec) kec = "LAINNYA";
+
+    if (!map[kec]) {
+      map[kec] = {
+        name: kec,
+        total: 0,
+        lengkap: 0,
+        belum: 0,
+        categories: {}
+      };
+    }
+
+    map[kec].total++;
+
+    // Hitung status kelengkapan
+    if (state.statusColIdx !== -1) {
+      const statusVal = (row[state.statusColIdx] || "").trim().toLowerCase();
+      if (statusVal.includes("sudah lengkap")) {
+        map[kec].lengkap++;
+      } else {
+        map[kec].belum++;
+      }
+    }
+
+    // Hitung kategori
+    if (state.jenisColIdx !== -1) {
+      const jenisVal = (row[state.jenisColIdx] || "").trim().toUpperCase() || "LAINNYA";
+      map[kec].categories[jenisVal] = (map[kec].categories[jenisVal] || 0) + 1;
+    }
+  });
+
+  // Urutkan kecamatan berdasarkan nama alfabetis
+  state.kecamatanSummaryList = Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// ==========================================================================
+// RENDER HALAMAN LANDING: GRID 18 KECAMATAN MANDATORY
+// ==========================================================================
+function renderLandingKecamatan() {
+  const gridEl = document.getElementById("kecamatanGrid");
+  const emptyEl = document.getElementById("landingEmptyState");
+  if (!gridEl) return;
+
+  gridEl.innerHTML = "";
+
+  let list = state.kecamatanSummaryList;
+  if (state.landingSearchQuery) {
+    list = list.filter(k => k.name.toLowerCase().includes(state.landingSearchQuery));
+  }
+
+  if (list.length === 0) {
+    gridEl.style.display = "none";
+    if (emptyEl) emptyEl.style.display = "flex";
+    return;
+  }
+
+  gridEl.style.display = "grid";
+  if (emptyEl) emptyEl.style.display = "none";
+
+  list.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "kecamatan-card";
+    card.setAttribute("tabindex", "0");
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", `Pilih Kecamatan ${item.name}`);
+
+    // Persentase kelengkapan
+    const pctLengkap = item.total > 0 ? Math.round((item.lengkap / item.total) * 100) : 0;
+
+    // Ambil top 3 kategori terbanyak untuk chip preview
+    const sortedCats = Object.entries(item.categories)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3);
+
+    const breakdownHtml = sortedCats.map(([cat, count]) => {
+      let icon = "📍";
+      if (cat.includes("MASJID")) icon = "🕌";
+      else if (cat.includes("MUSHOLLAH") || cat.includes("LANGGAR")) icon = "🕋";
+      else if (cat.includes("GEREJA")) icon = "⛪";
+      else if (cat.includes("PURA")) icon = "🛕";
+      else if (cat.includes("VIHARA") || cat.includes("BUDDHA")) icon = "☸️";
+      else if (cat.includes("TPQ") || cat.includes("LEMBAGA")) icon = "📖";
+      return `<span class="breakdown-chip">${icon} ${count} ${escapeHTML(cat)}</span>`;
+    }).join("");
+
+    card.innerHTML = `
+      <div>
+        <div class="kecamatan-card-top">
+          <div class="kecamatan-card-title-wrap">
+            <h3 class="kecamatan-card-title">${escapeHTML(item.name)}</h3>
+            <span class="kecamatan-card-subtitle">Kabupaten Gresik</span>
+          </div>
+          <div class="kecamatan-card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </div>
+        </div>
+
+        <div class="kecamatan-count-box">
+          <span class="kecamatan-count-number">${item.total.toLocaleString("id-ID")}</span>
+          <span class="kecamatan-count-label">Tempat Ibadah</span>
+        </div>
+
+        <div class="kecamatan-breakdown">
+          ${breakdownHtml}
+        </div>
+
+        <div class="kecamatan-progress-wrap">
+          <div class="kecamatan-progress-labels">
+            <span class="lengkap-text">✓ ${item.lengkap} Lengkap (${pctLengkap}%)</span>
+            <span>⚠ ${item.belum} Belum</span>
+          </div>
+          <div class="kecamatan-progress-bar">
+            <div class="kecamatan-progress-fill" style="width: ${pctLengkap}%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kecamatan-card-footer">
+        <span>Buka Data Kecamatan</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </div>
+    `;
+
+    // Klik untuk masuk ke dashboard kecamatan tersebut
+    card.addEventListener("click", () => {
+      selectKecamatan(item.name);
+    });
+
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        selectKecamatan(item.name);
+      }
+    });
+
+    gridEl.appendChild(card);
+  });
+}
+
+// ==========================================================================
+// LOGIKA PEMILIHAN KECAMATAN & PERPINDAHAN TAMPILAN
+// ==========================================================================
+function selectKecamatan(kecamatanName) {
+  state.selectedKecamatan = kecamatanName;
+
+  // 1. Filter SELURUH baris data khusus kecamatan ini (100% 1 KECAMATAN UTUH)
+  state.kecamatanAllRows = state.rawRows.filter(row => {
+    const val = (row[state.kecamatanColIdx] || "").trim().toUpperCase();
+    return val === kecamatanName.toUpperCase();
+  });
+
+  // 2. Reset kontrol & filter di dashboard tabel
+  state.currentPage = 1;
+  state.searchQuery = "";
+  state.filterJenisVal = "ALL";
+  state.filterStatusVal = "ALL";
+
+  const searchInput = document.getElementById("searchInput");
+  const clearBtn = document.getElementById("searchClearBtn");
+  if (searchInput) searchInput.value = "";
+  if (clearBtn) clearBtn.style.display = "none";
+
+  const statusFilter = document.getElementById("statusFilterSelect");
+  if (statusFilter) statusFilter.value = "ALL";
+
+  // 3. Update info banner aktif kecamatan
+  const activeBadgeName = document.getElementById("activeKecName");
+  const activeDescText = document.getElementById("activeKecNameText");
+  const activeTotalText = document.getElementById("activeKecTotalCount");
+  const statsKecName = document.getElementById("statsKecName");
+  const exportKecBadge = document.getElementById("exportKecBadge");
+
+  if (activeBadgeName) activeBadgeName.textContent = `KEC. ${kecamatanName}`;
+  if (activeDescText) activeDescText.textContent = `Kecamatan ${kecamatanName}`;
+  if (activeTotalText) activeTotalText.textContent = state.kecamatanAllRows.length.toLocaleString("id-ID");
+  if (statsKecName) statsKecName.textContent = kecamatanName;
+  if (exportKecBadge) exportKecBadge.textContent = `Kec. ${kecamatanName}`;
+
+  // 4. Update dropdown kategori hanya untuk jenis yang ada di kecamatan terpilih
+  populateCategoryDropdownForSelectedKecamatan();
+
+  // 5. Tampilkan Dashboard View & Sembunyikan Landing View
+  const landingView = document.getElementById("landingView");
+  const dashboardView = document.getElementById("dashboardView");
+
+  if (landingView) landingView.style.display = "none";
+  if (dashboardView) dashboardView.style.display = "flex";
+
+  // 6. Jalankan filter awal dan render tabel
+  applyFilters();
+
+  // Scroll ke atas halaman dengan halus
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Kembali ke Halaman Pemilihan Kecamatan ("Ganti Kecamatan")
+function showLandingPage() {
+  state.selectedKecamatan = null;
+  state.kecamatanAllRows = [];
+  state.filteredRows = [];
+
+  const landingView = document.getElementById("landingView");
+  const dashboardView = document.getElementById("dashboardView");
+
+  if (dashboardView) dashboardView.style.display = "none";
+  if (landingView) landingView.style.display = "flex";
+
+  // Re-render kartu kecamatan jika ada update
+  renderLandingKecamatan();
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Isi Dropdown Jenis Tempat Ibadah Khusus untuk Kecamatan Terpilih
+function populateCategoryDropdownForSelectedKecamatan() {
+  const jenisSelect = document.getElementById("categoryFilterSelect");
+  if (!jenisSelect) return;
+
+  jenisSelect.innerHTML = `<option value="ALL">Semua Jenis Tempat Ibadah (${state.kecamatanAllRows.length})</option>`;
+
+  if (state.jenisColIdx !== -1 && state.kecamatanAllRows.length > 0) {
+    const jenisCountMap = {};
+
+    state.kecamatanAllRows.forEach(row => {
+      const val = (row[state.jenisColIdx] || "").trim();
+      if (val) {
+        jenisCountMap[val] = (jenisCountMap[val] || 0) + 1;
+      }
+    });
+
+    Object.keys(jenisCountMap).sort((a, b) => a.localeCompare(b)).forEach(jenis => {
+      const opt = document.createElement("option");
+      opt.value = jenis;
+      opt.textContent = `${jenis} (${jenisCountMap[jenis]})`;
+      jenisSelect.appendChild(opt);
+    });
+  }
+}
+
+// ==========================================================================
+// FILTERING & PENGURUTAN DI DALAM KECAMATAN TERPILIH
+// ==========================================================================
+function applyFilters() {
+  if (!state.selectedKecamatan || state.kecamatanAllRows.length === 0) {
+    state.filteredRows = [];
+    renderTable();
+    updateBannerMetrics();
+    return;
+  }
+
+  // Filter dimulai dari data 1 kecamatan terpilih (state.kecamatanAllRows)
+  let result = [...state.kecamatanAllRows];
+
+  // 1. Filter Jenis
+  if (state.jenisColIdx !== -1 && state.filterJenisVal !== "ALL") {
+    result = result.filter(row => {
+      const val = (row[state.jenisColIdx] || "").trim().toLowerCase();
+      return val === state.filterJenisVal.toLowerCase();
+    });
+  }
+
+  // 2. Filter Status Kelengkapan
+  if (state.statusColIdx !== -1 && state.filterStatusVal !== "ALL") {
+    result = result.filter(row => {
+      const val = (row[state.statusColIdx] || "").trim().toLowerCase();
+      return val.includes(state.filterStatusVal.toLowerCase());
+    });
+  }
+
+  // 3. Pencarian Bebas di dalam Kecamatan Terpilih
+  if (state.searchQuery) {
+    result = result.filter(row => {
+      return row.some(cell => {
+        if (!cell) return false;
+        return cell.toString().toLowerCase().includes(state.searchQuery);
+      });
+    });
+  }
+
+  // 4. Pengurutan Kolom (Sorting)
+  if (state.sortColIndex !== -1) {
+    const idx = state.sortColIndex;
+    const isAsc = state.sortAsc;
+
+    result.sort((a, b) => {
+      const valA = (a[idx] || "").toString().trim();
+      const valB = (b[idx] || "").toString().trim();
+
+      const numA = parseFloat(valA.replace(/[^0-9.-]+/g, ""));
+      const numB = parseFloat(valB.replace(/[^0-9.-]+/g, ""));
+
+      if (!isNaN(numA) && !isNaN(numB) && valA === numA.toString() && valB === numB.toString()) {
+        return isAsc ? numA - numB : numB - numA;
+      }
+
+      return isAsc
+        ? valA.localeCompare(valB, undefined, { numeric: true })
+        : valB.localeCompare(valA, undefined, { numeric: true });
+    });
+  }
+
+  state.filteredRows = result;
+  updateBannerMetrics();
+  renderTable();
+}
+
+// Render Header & Body Tabel
+function renderTable() {
+  const tableHead = document.getElementById("tableHead");
+  const tableBody = document.getElementById("tableBody");
+  const emptyState = document.getElementById("emptyState");
+  const tableContainer = document.getElementById("tableContainer");
+
+  if (!tableHead || !tableBody) return;
+
+  tableHead.innerHTML = "";
+  tableBody.innerHTML = "";
+
+  if (state.filteredRows.length === 0) {
+    if (tableContainer) tableContainer.style.display = "none";
+    if (emptyState) emptyState.style.display = "flex";
+    const title = document.getElementById("emptyStateTitle");
+    const desc = document.getElementById("emptyStateDesc");
+    if (title) title.textContent = "Tidak Ada Data Ditemukan";
+    if (desc) desc.textContent = `Tidak ada tempat ibadah di Kecamatan ${state.selectedKecamatan || ""} yang cocok dengan kata kunci atau filter yang Anda pilih.`;
+    renderPagination(0);
+    return;
+  }
+
+  if (emptyState) emptyState.style.display = "none";
+  if (tableContainer) tableContainer.style.display = "block";
+
+  // 1. Render Header Tabel
+  const trHead = document.createElement("tr");
+
+  const thNo = document.createElement("th");
+  thNo.className = "row-index";
+  thNo.textContent = "#";
+  trHead.appendChild(thNo);
+
+  state.rawHeaders.forEach((colName, index) => {
+    const th = document.createElement("th");
+    th.className = "sortable";
+
+    const isCurrentSort = state.sortColIndex === index;
+    let arrowIcon = "↕";
+    if (isCurrentSort) {
+      arrowIcon = state.sortAsc ? "▲" : "▼";
+    }
+
+    const displayTitle = formatColumnHeader(colName);
+
+    th.innerHTML = `
+      <div class="th-content">
+        <span>${escapeHTML(displayTitle)}</span>
+        <span class="sort-icon ${isCurrentSort ? 'active' : ''}">${arrowIcon}</span>
+      </div>
+    `;
+
+    th.addEventListener("click", () => {
+      if (state.sortColIndex === index) {
+        state.sortAsc = !state.sortAsc;
+      } else {
+        state.sortColIndex = index;
+        state.sortAsc = true;
+      }
+      applyFilters();
+    });
+
+    trHead.appendChild(th);
+  });
+
+  tableHead.appendChild(trHead);
+
+  // 2. Render Baris Data (Body)
+  const totalRows = state.filteredRows.length;
+  const startIdx = (state.currentPage - 1) * state.rowsPerPage;
+  const endIdx = Math.min(startIdx + state.rowsPerPage, totalRows);
+  const pageRows = state.filteredRows.slice(startIdx, endIdx);
+
+  pageRows.forEach((row, rowIdx) => {
+    const tr = document.createElement("tr");
+
+    const tdNo = document.createElement("td");
+    tdNo.className = "row-index";
+    tdNo.textContent = startIdx + rowIdx + 1;
+    tr.appendChild(tdNo);
+
+    row.forEach((cellValue, colIdx) => {
+      const td = document.createElement("td");
+      td.innerHTML = formatCellValue(cellValue, state.rawHeaders[colIdx]);
+      tr.appendChild(td);
+    });
+
+    tableBody.appendChild(tr);
+  });
+
+  renderPagination(totalRows, startIdx + 1, endIdx);
+}
+
+// Formatter Khusus untuk Sel Tabel (Default: Bersihkan spasi di depan kata/kalimat)
+function formatCellValue(val, colHeader = "") {
+  if (val === undefined || val === null || val === "") {
+    return `<span style="color:var(--text-light);">-</span>`;
+  }
+
+  // Bersihkan data dari semua spasi di depan kata/kalimat sebelum ditampilkan
+  let str = cleanLeadingSpaces(val).trimEnd();
+  if (str === "") {
+    return `<span style="color:var(--text-light);">-</span>`;
+  }
+
+  const lowerHeader = (colHeader || "").toLowerCase();
+
+  // Badge Jenis Tempat Ibadah
+  if (/jenis/i.test(lowerHeader)) {
+    const lowerVal = str.toLowerCase();
+    if (lowerVal.includes("masjid")) {
+      return `<span class="table-badge badge-islam">${escapeHTML(str)}</span>`;
+    } else if (lowerVal.includes("mushollah") || lowerVal.includes("mushola") || lowerVal.includes("langgar")) {
+      return `<span class="table-badge badge-musholla">${escapeHTML(str)}</span>`;
+    } else if (lowerVal.includes("gereja")) {
+      return `<span class="table-badge badge-kristen">${escapeHTML(str)}</span>`;
+    } else if (lowerVal.includes("pura")) {
+      return `<span class="table-badge badge-hindu">${escapeHTML(str)}</span>`;
+    } else if (lowerVal.includes("vihara") || lowerVal.includes("buddha")) {
+      return `<span class="table-badge badge-buddha">${escapeHTML(str)}</span>`;
+    } else if (lowerVal.includes("klenteng") || lowerVal.includes("khonghucu")) {
+      return `<span class="table-badge badge-khonghucu">${escapeHTML(str)}</span>`;
+    } else {
+      return `<span class="table-badge badge-lembaga">${escapeHTML(str)}</span>`;
+    }
+  }
+
+  // Badge Status Kelengkapan
+  if (/apakah sudah terisi|kelengkapan/i.test(lowerHeader)) {
+    const lowerVal = str.toLowerCase();
+    if (lowerVal.includes("sudah lengkap")) {
+      return `<span class="table-badge badge-lengkap">✓ Sudah Lengkap</span>`;
+    } else if (lowerVal.includes("belum lengkap")) {
+      return `<span class="table-badge badge-belum">⚠ Belum Lengkap</span>`;
+    }
+  }
+
+  // Link URL
+  if (/^https?:\/\//i.test(str)) {
+    return `<a href="${escapeHTML(str)}" target="_blank" rel="noopener noreferrer" class="link-cell">
+      Buka Tautan
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+    </a>`;
+  }
+
+  // Multiline Text: pastikan setiap baris bersih dari spasi di depan kata/kalimat
+  if (str.includes("\n")) {
+    const cleanLines = str.split("\n").map(l => cleanLeadingSpaces(l));
+    return escapeHTML(cleanLines.join("\n")).replace(/\n/g, "<br>");
+  }
+
+  return escapeHTML(str);
+}
+
+// Format Judul Kolom Tabel
+function formatColumnHeader(colName) {
+  if (!colName) return "";
+  const clean = colName.trim();
+  const lower = clean.toLowerCase();
+
+  if (/apakah sudah terisi|lengkap/i.test(lower)) {
+    return "Kelengkapan Data";
+  }
+  return clean;
+}
+
+// Render Kontrol Pagination
+function renderPagination(totalRows, from = 0, to = 0) {
+  const infoEl = document.getElementById("paginationInfo");
+  const controlsEl = document.getElementById("paginationControls");
+
+  if (!infoEl || !controlsEl) return;
+
+  if (totalRows === 0) {
+    infoEl.textContent = "Tidak ada data yang ditampilkan";
+    controlsEl.innerHTML = "";
+    return;
+  }
+
+  infoEl.textContent = `Menampilkan ${from} - ${to} dari total ${totalRows.toLocaleString("id-ID")} tempat ibadah di Kec. ${state.selectedKecamatan || ""}`;
+
+  const totalPages = Math.ceil(totalRows / state.rowsPerPage);
+  if (totalPages <= 1) {
+    controlsEl.innerHTML = "";
+    return;
+  }
+
+  let html = `
+    <button class="page-btn" ${state.currentPage === 1 ? "disabled" : ""} onclick="changePage(${state.currentPage - 1})" title="Halaman Sebelumnya">
+      &laquo;
+    </button>
+  `;
+
+  const startPage = Math.max(1, state.currentPage - 2);
+  const endPage = Math.min(totalPages, state.currentPage + 2);
+
+  if (startPage > 1) {
+    html += `<button class="page-btn" onclick="changePage(1)">1</button>`;
+    if (startPage > 2) html += `<span style="padding: 0 4px; color: var(--text-light);">...</span>`;
+  }
+
+  for (let p = startPage; p <= endPage; p++) {
+    html += `
+      <button class="page-btn ${p === state.currentPage ? 'active' : ''}" onclick="changePage(${p})">
+        ${p}
+      </button>
+    `;
+  }
+
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) html += `<span style="padding: 0 4px; color: var(--text-light);">...</span>`;
+    html += `<button class="page-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
+  }
+
+  html += `
+    <button class="page-btn" ${state.currentPage === totalPages ? "disabled" : ""} onclick="changePage(${state.currentPage + 1})" title="Halaman Selanjutnya">
+      &raquo;
+    </button>
+  `;
+
+  controlsEl.innerHTML = html;
+}
+
+window.changePage = function (newPage) {
+  state.currentPage = newPage;
+  renderTable();
+  const tableEl = document.querySelector(".table-responsive");
+  if (tableEl) tableEl.scrollTop = 0;
+};
+
+// Format waktu pembaruan terakhir: hh:mm:ss WIB (contoh: 18:40:40 WIB)
+function formatTimeWIB(date) {
+  if (!date) return "-";
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return "-";
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${hh}:${mm}:${ss} WIB`;
+}
+
+// Update Angka Metrik Banner
+function updateBannerMetrics() {
+  const metricTotal = document.getElementById("metricTotal");
+  const metricFiltered = document.getElementById("metricFiltered");
+  const metricLastSync = document.getElementById("metricLastSync");
+
+  if (metricTotal) {
+    metricTotal.textContent = state.kecamatanAllRows.length.toLocaleString("id-ID");
+  }
+
+  if (metricFiltered) {
+    metricFiltered.textContent = state.filteredRows.length.toLocaleString("id-ID");
+  }
+
+  if (metricLastSync && state.lastUpdated) {
+    metricLastSync.textContent = formatTimeWIB(state.lastUpdated);
+  }
+}
+
+function updateStatus(status, label) {
+  const ind = document.getElementById("statusIndicator");
+  const txt = document.getElementById("statusText");
+  if (!ind || !txt) return;
+
+  ind.className = `status-indicator ${status}`;
+  txt.textContent = label;
+}
+
+function setLoadingState(isLoading) {
+  const loadingEl = document.getElementById("loadingState");
+  const refreshIcon = document.querySelector("#refreshBtn svg");
+
+  if (loadingEl) {
+    loadingEl.style.display = isLoading ? "flex" : "none";
+  }
+
+  if (refreshIcon) {
+    if (isLoading) refreshIcon.classList.add("spinner");
+    else refreshIcon.classList.remove("spinner");
+  }
+}
+
+function renderErrorState(errorMessage) {
+  const tableContainer = document.getElementById("tableContainer");
+  const emptyState = document.getElementById("emptyState");
+  const titleEl = document.getElementById("emptyStateTitle");
+  const descEl = document.getElementById("emptyStateDesc");
+
+  if (tableContainer) tableContainer.style.display = "none";
+  if (emptyState) emptyState.style.display = "flex";
+
+  if (titleEl) titleEl.innerHTML = `<span style="color: #ef4444;">Gagal Mengambil Data</span>`;
+  if (descEl) descEl.innerHTML = escapeHTML(errorMessage);
+  renderPagination(0);
+}
+
+// ==========================================================================
+// EXPORT EXCEL (.XLSX) - ATURAN WAJIB: SELALU 1 KECAMATAN PENUH
+// (Mengabaikan filter pencarian di layar tabel)
+// ==========================================================================
+function exportToExcel() {
+  if (!state.selectedKecamatan || !state.kecamatanAllRows || state.kecamatanAllRows.length === 0) {
+    showToast("Silakan pilih kecamatan terlebih dahulu untuk mengekspor data!", "error");
+    return;
+  }
+
+  // ATURAN MANDATORY: Ekspor SELALU mengambil seluruh data 1 kecamatan tersebut!
+  const dataToExport = state.kecamatanAllRows;
+
+  showToast(`Menyiapkan Excel seluruh data Kecamatan ${state.selectedKecamatan}...`, "info");
+
+  try {
+    if (typeof XLSX === "undefined") {
+      throw new Error("Pustaka ekspor Excel (.xlsx) belum termuat. Anda dapat menggunakan tombol CSV sebagai alternatif.");
+    }
+
+    const exportHeaders = ["No", ...state.rawHeaders.map(formatColumnHeader)];
+    const exportRows = dataToExport.map((row, idx) => [idx + 1, ...row]);
+    const exportData = [exportHeaders, ...exportRows];
+
+    const ws = XLSX.utils.aoa_to_sheet(exportData);
+
+    // Otomatis atur lebar kolom agar rapi dan tidak terpotong
+    const colWidths = exportHeaders.map((header, colIdx) => {
+      let maxLen = header.length;
+      exportRows.forEach(r => {
+        const val = r[colIdx] ? r[colIdx].toString() : "";
+        if (val.length > maxLen) maxLen = val.length;
+      });
+      return { wch: Math.min(Math.max(maxLen + 3, 10), 50) };
+    });
+    ws['!cols'] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    // Beri nama tab sheet sesuai nama kecamatan (maksimal 31 karakter batasan Excel)
+    const sheetName = state.selectedKecamatan.slice(0, 31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const fileName = `Data_Tempat_Ibadah_Kecamatan_${state.selectedKecamatan}_${dateStr}.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+    showToast(`Sukses mengekspor ${dataToExport.length.toLocaleString("id-ID")} data Kecamatan ${state.selectedKecamatan} ke Excel!`, "success");
+  } catch (err) {
+    console.error("Gagal export excel:", err);
+    showToast("Gagal ekspor ke Excel: " + err.message, "error");
+  }
+}
+
+// ==========================================================================
+// EXPORT CSV - ATURAN WAJIB: SELALU 1 KECAMATAN PENUH
+// ==========================================================================
+function exportToCSV() {
+  if (!state.selectedKecamatan || !state.kecamatanAllRows || state.kecamatanAllRows.length === 0) {
+    showToast("Silakan pilih kecamatan terlebih dahulu untuk mengekspor data!", "error");
+    return;
+  }
+
+  // ATURAN MANDATORY: Ekspor SELALU mengambil seluruh data 1 kecamatan tersebut!
+  const dataToExport = state.kecamatanAllRows;
+
+  const exportHeaders = ["No", ...state.rawHeaders.map(formatColumnHeader)];
+  const exportRows = dataToExport.map((row, idx) => [idx + 1, ...row]);
+  const allRows = [exportHeaders, ...exportRows];
+
+  const csvContent = allRows.map(row =>
+    row.map(cell => {
+      const str = (cell || "").toString().replace(/"/g, '""');
+      return `"${str}"`;
+    }).join(",")
+  ).join("\r\n");
+
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const dateStr = new Date().toISOString().slice(0, 10);
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Data_Tempat_Ibadah_Kecamatan_${state.selectedKecamatan}_${dateStr}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  showToast(`File CSV seluruh data Kecamatan ${state.selectedKecamatan} (${dataToExport.length} data) berhasil diunduh!`, "success");
+}
+
+// Sinkronisasi Pembaruan Online dari Server Data di Latar Belakang
+async function syncOnlineData(isManual = false) {
+  if (isManual) {
+    setLoadingState(true);
+    updateStatus("loading", "Menyinkronkan data...");
+    showToast("Menghubungkan ke Google Sheets pusat...", "info");
+  }
+
+  // Prioritaskan endpoint langsung Google Sheets dengan cache-buster timestamp
+  const directEndpoint = `${REMOTE_DATA_ENDPOINT}&_t=${Date.now()}`;
+  const isFileProtocol = window.location.protocol === "file:";
+
+  let freshCSV = null;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 7000); // 7s timeout
+
+    const res = await fetch(directEndpoint, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.includes("JENIS TEMPAT IBADAH") && text.length > 1000) {
+        freshCSV = text;
+      }
+    }
+  } catch (e) {
+    // Error jaringan atau CORS pada file://
+  }
+
+  if (freshCSV) {
+    localStorage.setItem(STORAGE_KEY_CACHE, freshCSV);
+    const now = new Date();
+    localStorage.setItem(STORAGE_KEY_TIME, now.toISOString());
+    state.lastUpdated = now;
+
+    loadCSVToState(freshCSV);
+    updateBannerMetrics(); // Pastikan jam Pembaruan Terakhir langsung berubah di layar!
+    updateStatus("active", `Terhubung Online (${state.rawRows.length.toLocaleString("id-ID")} Data)`);
+    setLoadingState(false);
+
+    if (isManual) {
+      showToast(`Data online berhasil disinkronkan (${formatTimeWIB(now)})! Total: ${state.rawRows.length.toLocaleString("id-ID")} data.`, "success");
+    }
+  } else {
+    setLoadingState(false);
+    if (state.rawRows.length > 0) {
+      if (isFileProtocol) {
+        updateStatus("active", `Data Aktif (${state.rawRows.length.toLocaleString("id-ID")} Data)`);
+        if (isManual) {
+          showToast(`Menampilkan seluruh ${state.rawRows.length.toLocaleString("id-ID")} data. Browser membatasi sinkronisasi live langsung pada protokol file:// lokal karena kebijakan keamanan origin. Sinkronisasi live Google Sheets otomatis aktif penuh saat di-deploy ke GitHub Pages.`, "info");
+        }
+      } else {
+        updateStatus("active", `Terhubung (${state.rawRows.length.toLocaleString("id-ID")} Data)`);
+        if (isManual) {
+          showToast("Data sudah yang paling mutakhir atau server Google sedang sibuk. Menampilkan data tersimpan.", "info");
+        }
+      }
+    } else {
+      updateStatus("error", "Gagal Terhubung");
+      renderErrorState("Tidak dapat memuat pembaruan data. Periksa koneksi internet Anda.");
+    }
+  }
+}
+
+// Toast Notification
+function showToast(message, type = "info") {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${type === 'error' ? 'toast-error' : ''}`;
+
+  toast.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <span>${escapeHTML(message)}</span>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(100%)";
+    toast.style.transition = "all 0.3s ease";
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+function escapeHTML(str) {
+  if (str === null || str === undefined) return "";
+  return str.toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
