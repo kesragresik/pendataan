@@ -199,7 +199,9 @@ function initEventListeners() {
   }
 
   if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
+    clearBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      e.preventDefault();
       searchInput.value = "";
       state.searchQuery = "";
       clearBtn.style.display = "none";
@@ -259,9 +261,9 @@ function initEventListeners() {
     exportExcelBtn.addEventListener("click", exportToExcel);
   }
 
-  const exportCsvBtn = document.getElementById("exportCsvBtn");
-  if (exportCsvBtn) {
-    exportCsvBtn.addEventListener("click", exportToCSV);
+  const exportPdfBtn = document.getElementById("exportPdfBtn");
+  if (exportPdfBtn) {
+    exportPdfBtn.addEventListener("click", exportToPDF);
   }
 }
 
@@ -307,7 +309,7 @@ function bootstrapData() {
     updateStatus("loading", "Menghubungkan data...");
   }
 
-  // 2. OTOMATIS: Langsung tarik data terbaru dari Google Sheets detik itu juga
+  // 2. OTOMATIS: Langsung tarik data terbaru dari server data pusat detik itu juga
   syncOnlineData(false);
 
   // 3. OTOMATIS: Cek pembaruan berkala setiap 3 menit di latar belakang
@@ -392,15 +394,117 @@ function computeKecamatanSummaries() {
       }
     }
 
-    // Hitung kategori
+    // Hitung kategori (Hanya 10 kategori baku resmi)
     if (state.jenisColIdx !== -1) {
-      const jenisVal = (row[state.jenisColIdx] || "").trim().toUpperCase() || "LAINNYA";
-      map[kec].categories[jenisVal] = (map[kec].categories[jenisVal] || 0) + 1;
+      const rawJenis = (row[state.jenisColIdx] || "").trim();
+      const normCat = normalizeCategory(rawJenis);
+      if (normCat) {
+        map[kec].categories[normCat] = (map[kec].categories[normCat] || 0) + 1;
+      }
     }
   });
 
   // Urutkan kecamatan berdasarkan nama alfabetis
   state.kecamatanSummaryList = Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// ==========================================================================
+// 10 KELOMPOK DATA TEMPAT IBADAH & LEMBAGA KEAGAMAAN BAKU
+// Urutan Resmi:
+// 1. MASJID
+// 2. MUSHOLLAH
+// 3. LANGGAR
+// 4. VIHARA
+// 5. KLENTENG
+// 6. PURA
+// 7. GEREJA KRISTEN (selain Katolik)
+// 8. GEREJA KATOLIK (Katolik sendiri)
+// 9. KEPERCAYAAN KEPADA YME
+// 10. RUMAH DOA
+// 11. LEMBAGA KEAGAMAAN
+// ==========================================================================
+const ALLOWED_CATEGORIES = [
+  "MASJID",
+  "MUSHOLLAH",
+  "LANGGAR",
+  "VIHARA",
+  "KLENTENG",
+  "PURA",
+  "GEREJA KRISTEN",
+  "GEREJA KATOLIK",
+  "KEPERCAYAAN KEPADA YME",
+  "RUMAH DOA",
+  "LEMBAGA KEAGAMAAN"
+];
+
+function normalizeCategory(rawJenis) {
+  if (!rawJenis) return null;
+  const upper = rawJenis.trim().toUpperCase();
+
+  // 1. MASJID
+  if (upper.includes("MASJID")) return "MASJID";
+
+  // 2. MUSHOLLAH (mushola, mushalla, mushollah, musolla)
+  if (/MUSHOLLAH|MUSHOLA|MUSHALLA|MUSHOLLA|MUSOLLA/i.test(upper)) return "MUSHOLLAH";
+
+  // 3. LANGGAR (e.g. LANGGAR, LANGGAR SINDUJOYO, LANGGAR AR-RAHMAN, dsb.)
+  if (upper.includes("LANGGAR")) return "LANGGAR";
+
+  // 4. VIHARA (vihara, wihara)
+  if (upper.includes("VIHARA") || upper.includes("WIHARA")) return "VIHARA";
+
+  // 5. KLENTENG (klenteng, kelenteng)
+  if (upper.includes("KLENTENG") || upper.includes("KELENTENG")) return "KLENTENG";
+
+  // 6. PURA
+  if (upper.includes("PURA")) return "PURA";
+
+  // 8. GEREJA KATOLIK (Gereja Katolik sendiri)
+  if (/KATOLIK/i.test(upper)) return "GEREJA KATOLIK";
+
+  // 7. GEREJA KRISTEN (Gereja selain Katolik: Gereja, Gereja Kristen, Gereja Nasrani, Protestan, dsb.)
+  if (upper.includes("GEREJA") || /KRISTEN|PROTESTAN|NASRANI/i.test(upper)) return "GEREJA KRISTEN";
+
+  // 9. KEPERCAYAAN KEPADA YME
+  if (/KEPERCAYAAN|YME/i.test(upper)) return "KEPERCAYAAN KEPADA YME";
+
+  // 10. RUMAH DOA
+  if (upper.includes("RUMAH DOA")) return "RUMAH DOA";
+
+  // 11. LEMBAGA KEAGAMAAN (termasuk LEMBAGA, YAYASAN, ORGANISASI, TPQ, PESANTREN)
+  if (/LEMBAGA|YAYASAN|ORGANISASI|TPQ|PESANTREN/i.test(upper)) return "LEMBAGA KEAGAMAAN";
+
+  // Selain kategori di atas, tidak usah ditampilkan
+  return null;
+}
+
+function getCategoryRank(catName) {
+  const idx = ALLOWED_CATEGORIES.indexOf(catName);
+  return idx !== -1 ? idx : 999;
+}
+
+function compareCategories(a, b) {
+  const rankA = getCategoryRank(a);
+  const rankB = getCategoryRank(b);
+  if (rankA !== rankB) return rankA - rankB;
+  return a.localeCompare(b);
+}
+
+function getCategoryIcon(cat) {
+  switch (cat) {
+    case "MASJID": return "🕌";
+    case "MUSHOLLAH": return "🕋";
+    case "LANGGAR": return "📿";
+    case "VIHARA": return "🪷";
+    case "KLENTENG": return "🏮";
+    case "PURA": return "🛕";
+    case "GEREJA KRISTEN": return "⛪";
+    case "GEREJA KATOLIK": return "⛪";
+    case "KEPERCAYAAN KEPADA YME": return "🕊️";
+    case "RUMAH DOA": return "🏠";
+    case "LEMBAGA KEAGAMAAN": return "🏛️";
+    default: return "📍";
+  }
 }
 
 // ==========================================================================
@@ -437,19 +541,13 @@ function renderLandingKecamatan() {
     // Persentase kelengkapan
     const pctLengkap = item.total > 0 ? Math.round((item.lengkap / item.total) * 100) : 0;
 
-    // Ambil top 3 kategori terbanyak untuk chip preview
+    // Urutkan kategori sesuai 10 kelompok data resmi yang ditentukan
     const sortedCats = Object.entries(item.categories)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3);
+      .filter(([cat]) => ALLOWED_CATEGORIES.includes(cat))
+      .sort((a, b) => getCategoryRank(a[0]) - getCategoryRank(b[0]));
 
     const breakdownHtml = sortedCats.map(([cat, count]) => {
-      let icon = "📍";
-      if (cat.includes("MASJID")) icon = "🕌";
-      else if (cat.includes("MUSHOLLAH") || cat.includes("LANGGAR")) icon = "🕋";
-      else if (cat.includes("GEREJA")) icon = "⛪";
-      else if (cat.includes("PURA")) icon = "🛕";
-      else if (cat.includes("VIHARA") || cat.includes("BUDDHA")) icon = "☸️";
-      else if (cat.includes("TPQ") || cat.includes("LEMBAGA")) icon = "📖";
+      const icon = getCategoryIcon(cat);
       return `<span class="breakdown-chip">${icon} ${count} ${escapeHTML(cat)}</span>`;
     }).join("");
 
@@ -460,17 +558,10 @@ function renderLandingKecamatan() {
             <h3 class="kecamatan-card-title">${escapeHTML(item.name)}</h3>
             <span class="kecamatan-card-subtitle">Kabupaten Gresik</span>
           </div>
-          <div class="kecamatan-card-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
+          <div class="kecamatan-card-count-text">
+            <span class="count-text-number">${item.total.toLocaleString("id-ID")}</span>
+            <span class="count-text-label">Data</span>
           </div>
-        </div>
-
-        <div class="kecamatan-count-box">
-          <span class="kecamatan-count-number">${item.total.toLocaleString("id-ID")}</span>
-          <span class="kecamatan-count-label">Tempat Ibadah</span>
         </div>
 
         <div class="kecamatan-breakdown">
@@ -479,8 +570,7 @@ function renderLandingKecamatan() {
 
         <div class="kecamatan-progress-wrap">
           <div class="kecamatan-progress-labels">
-            <span class="lengkap-text">✓ ${item.lengkap} Lengkap (${pctLengkap}%)</span>
-            <span>⚠ ${item.belum} Belum</span>
+            <span class="lengkap-text">✓ ${item.lengkap.toLocaleString("id-ID")} Lengkap (${pctLengkap}%)</span>
           </div>
           <div class="kecamatan-progress-bar">
             <div class="kecamatan-progress-fill" style="width: ${pctLengkap}%;"></div>
@@ -592,23 +682,26 @@ function populateCategoryDropdownForSelectedKecamatan() {
   const jenisSelect = document.getElementById("categoryFilterSelect");
   if (!jenisSelect) return;
 
-  jenisSelect.innerHTML = `<option value="ALL">Semua Jenis Tempat Ibadah (${state.kecamatanAllRows.length})</option>`;
+  jenisSelect.innerHTML = `<option value="ALL">Semua Jenis (${state.kecamatanAllRows.length})</option>`;
 
   if (state.jenisColIdx !== -1 && state.kecamatanAllRows.length > 0) {
     const jenisCountMap = {};
 
     state.kecamatanAllRows.forEach(row => {
-      const val = (row[state.jenisColIdx] || "").trim();
-      if (val) {
-        jenisCountMap[val] = (jenisCountMap[val] || 0) + 1;
+      const rawJenis = (row[state.jenisColIdx] || "").trim();
+      const normCat = normalizeCategory(rawJenis);
+      if (normCat) {
+        jenisCountMap[normCat] = (jenisCountMap[normCat] || 0) + 1;
       }
     });
 
-    Object.keys(jenisCountMap).sort((a, b) => a.localeCompare(b)).forEach(jenis => {
-      const opt = document.createElement("option");
-      opt.value = jenis;
-      opt.textContent = `${jenis} (${jenisCountMap[jenis]})`;
-      jenisSelect.appendChild(opt);
+    ALLOWED_CATEGORIES.forEach(cat => {
+      if (jenisCountMap[cat]) {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = `${cat} (${jenisCountMap[cat]})`;
+        jenisSelect.appendChild(opt);
+      }
     });
   }
 }
@@ -630,8 +723,9 @@ function applyFilters() {
   // 1. Filter Jenis
   if (state.jenisColIdx !== -1 && state.filterJenisVal !== "ALL") {
     result = result.filter(row => {
-      const val = (row[state.jenisColIdx] || "").trim().toLowerCase();
-      return val === state.filterJenisVal.toLowerCase();
+      const rawJenis = (row[state.jenisColIdx] || "").trim();
+      const normCat = normalizeCategory(rawJenis);
+      return normCat === state.filterJenisVal;
     });
   }
 
@@ -725,6 +819,9 @@ function renderTable() {
     }
 
     const displayTitle = formatColumnHeader(colName);
+    if (index === state.jenisColIdx || displayTitle.toLowerCase() === "jenis") {
+      th.classList.add("col-jenis");
+    }
 
     th.innerHTML = `
       <div class="th-content">
@@ -764,6 +861,9 @@ function renderTable() {
 
     row.forEach((cellValue, colIdx) => {
       const td = document.createElement("td");
+      if (colIdx === state.jenisColIdx) {
+        td.className = "col-jenis";
+      }
       td.innerHTML = formatCellValue(cellValue, state.rawHeaders[colIdx]);
       tr.appendChild(td);
     });
@@ -795,7 +895,9 @@ function formatCellValue(val, colHeader = "") {
       return `<span class="table-badge badge-islam">${escapeHTML(str)}</span>`;
     } else if (lowerVal.includes("mushollah") || lowerVal.includes("mushola") || lowerVal.includes("langgar")) {
       return `<span class="table-badge badge-musholla">${escapeHTML(str)}</span>`;
-    } else if (lowerVal.includes("gereja")) {
+    } else if (lowerVal.includes("katolik")) {
+      return `<span class="table-badge badge-katolik">${escapeHTML(str)}</span>`;
+    } else if (lowerVal.includes("gereja") || lowerVal.includes("kristen") || lowerVal.includes("nasrani") || lowerVal.includes("protestan")) {
       return `<span class="table-badge badge-kristen">${escapeHTML(str)}</span>`;
     } else if (lowerVal.includes("pura")) {
       return `<span class="table-badge badge-hindu">${escapeHTML(str)}</span>`;
@@ -808,8 +910,8 @@ function formatCellValue(val, colHeader = "") {
     }
   }
 
-  // Badge Status Kelengkapan
-  if (/apakah sudah terisi|kelengkapan/i.test(lowerHeader)) {
+  // Badge Status Kelengkapan (khusus kolom status utama, bukan kolom alasan kekurangan)
+  if ((/apakah sudah terisi|kelengkapan/i.test(lowerHeader)) && !lowerHeader.includes("jika belum")) {
     const lowerVal = str.toLowerCase();
     if (lowerVal.includes("sudah lengkap")) {
       return `<span class="table-badge badge-lengkap">✓ Sudah Lengkap</span>`;
@@ -841,7 +943,14 @@ function formatColumnHeader(colName) {
   const clean = colName.trim();
   const lower = clean.toLowerCase();
 
-  if (/apakah sudah terisi|lengkap/i.test(lower)) {
+  // Kolom "JENIS TEMPAT IBADAH & LEMBAGA KEAGAMAAN" diganti "Jenis"
+  if (/jenis/i.test(lower) && (/tempat\s+ibadah/i.test(lower) || /lembaga/i.test(lower))) {
+    return "Jenis";
+  }
+
+  // Hanya kolom pertanyaan status utama yang disingkat menjadi "Kelengkapan Data"
+  // Kolom alasan "Jika belum lengkap..." tetap utuh
+  if (/apakah sudah terisi|sebelum di submit/i.test(lower)) {
     return "Kelengkapan Data";
   }
   return clean;
@@ -1016,12 +1125,13 @@ function exportToExcel() {
     ws['!cols'] = colWidths;
 
     const wb = XLSX.utils.book_new();
-    // Beri nama tab sheet sesuai nama kecamatan (maksimal 31 karakter batasan Excel)
-    const sheetName = state.selectedKecamatan.slice(0, 31);
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    // Beri nama tab kerja sesuai nama kecamatan (maksimal 31 karakter batasan Excel)
+    const tabName = state.selectedKecamatan.slice(0, 31);
+    XLSX.utils.book_append_sheet(wb, ws, tabName);
 
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const fileName = `Data_Tempat_Ibadah_Kecamatan_${state.selectedKecamatan}_${dateStr}.xlsx`;
+    const kecName = state.selectedKecamatan.toUpperCase();
+    const dateFormatted = formatIndoDateFileName();
+    const fileName = `Data_Pendataan_Tempat_Ibadah_${kecName}_${dateFormatted}.xlsx`;
 
     XLSX.writeFile(wb, fileName);
     showToast(`Sukses mengekspor ${dataToExport.length.toLocaleString("id-ID")} data Kecamatan ${state.selectedKecamatan} ke Excel!`, "success");
@@ -1031,10 +1141,23 @@ function exportToExcel() {
   }
 }
 
+// Format Tanggal Indonesia untuk Penamaan Berkas (Contoh: 10-Oktober-2026 atau 29-Desember-2020)
+function formatIndoDateFileName(date = new Date()) {
+  const months = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+  const day = String(date.getDate()).padStart(2, "0");
+  const monthName = months[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day}-${monthName}-${year}`;
+}
+
 // ==========================================================================
-// EXPORT CSV - ATURAN WAJIB: SELALU 1 KECAMATAN PENUH
+// EXPORT PDF (.PDF) - ATURAN WAJIB: SELALU 1 KECAMATAN PENUH
+// (Mengabaikan filter pencarian di layar tabel)
 // ==========================================================================
-function exportToCSV() {
+function exportToPDF() {
   if (!state.selectedKecamatan || !state.kecamatanAllRows || state.kecamatanAllRows.length === 0) {
     showToast("Silakan pilih kecamatan terlebih dahulu untuk mengekspor data!", "error");
     return;
@@ -1043,29 +1166,99 @@ function exportToCSV() {
   // ATURAN MANDATORY: Ekspor SELALU mengambil seluruh data 1 kecamatan tersebut!
   const dataToExport = state.kecamatanAllRows;
 
-  const exportHeaders = ["No", ...state.rawHeaders.map(formatColumnHeader)];
-  const exportRows = dataToExport.map((row, idx) => [idx + 1, ...row]);
-  const allRows = [exportHeaders, ...exportRows];
+  showToast(`Menyiapkan dokumen PDF seluruh data Kecamatan ${state.selectedKecamatan}...`, "info");
 
-  const csvContent = allRows.map(row =>
-    row.map(cell => {
-      const str = (cell || "").toString().replace(/"/g, '""');
-      return `"${str}"`;
-    }).join(",")
-  ).join("\r\n");
+  try {
+    const jsPDFClass = window.jspdf ? window.jspdf.jsPDF : (typeof jsPDF !== "undefined" ? jsPDF : null);
+    if (!jsPDFClass) {
+      throw new Error("Pustaka ekspor PDF belum termuat.");
+    }
 
-  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  const dateStr = new Date().toISOString().slice(0, 10);
-  link.setAttribute("href", url);
-  link.setAttribute("download", `Data_Tempat_Ibadah_Kecamatan_${state.selectedKecamatan}_${dateStr}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+    const doc = new jsPDFClass({
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4"
+    });
 
-  showToast(`File CSV seluruh data Kecamatan ${state.selectedKecamatan} (${dataToExport.length} data) berhasil diunduh!`, "success");
+    const kecName = state.selectedKecamatan.toUpperCase();
+    const dateFormatted = formatIndoDateFileName();
+    const fileName = `Data_Pendataan_Tempat_Ibadah_${kecName}_${dateFormatted}.pdf`;
+
+    // Judul Dokumen & Metadata Resmi Kop Dokumen
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(30, 41, 59);
+    doc.text(`DATA PENDATAAN TEMPAT IBADAH & LEMBAGA KEAGAMAAN`, 14, 13);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Wilayah: Kecamatan ${kecName} | Bagian Kesejahteraan Sosial Sekretariat Daerah Kabupaten Gresik`, 14, 19);
+
+    const infoText = `Total Data: ${dataToExport.length} Tempat Ibadah | Tanggal Unduh: ${dateFormatted}`;
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(infoText, 14, 24);
+
+    // Header tabel
+    const exportHeaders = ["No", ...state.rawHeaders.map(formatColumnHeader)];
+    const exportRows = dataToExport.map((row, idx) => [idx + 1, ...row.map(c => c || "-")]);
+
+    doc.autoTable({
+      head: [exportHeaders],
+      body: exportRows,
+      startY: 27,
+      margin: { top: 27, left: 8, right: 8, bottom: 12 },
+      styles: {
+        font: "helvetica",
+        fontSize: 6.5,
+        cellPadding: 1.5,
+        lineColor: [226, 232, 240],
+        lineWidth: 0.1,
+        overflow: "linebreak",
+        valign: "middle"
+      },
+      headStyles: {
+        fillColor: [5, 150, 105], // Emerald Green #059669
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 7,
+        halign: "center"
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
+      },
+      columnStyles: {
+        0: { cellWidth: 8, halign: "center" }, // No
+        1: { cellWidth: 16 }, // Timestamp
+        2: { cellWidth: 26 }, // Email
+        3: { cellWidth: 18 }, // Jenis
+        4: { cellWidth: 32 }, // Nama
+        5: { cellWidth: 16 }, // Kecamatan
+        6: { cellWidth: 18 }, // Desa
+        7: { cellWidth: 42 }, // Alamat
+        8: { cellWidth: 24 }, // Pengurus
+        9: { cellWidth: 22, halign: "center" }, // Kelengkapan
+        10: { cellWidth: "auto" } // Dokumen kurang
+      },
+      didDrawPage: function (data) {
+        const pageCount = doc.internal.getNumberOfPages();
+        doc.setFontSize(7);
+        doc.setTextColor(148, 163, 184);
+        doc.text(
+          `Halaman ${data.pageNumber} dari ${pageCount} | Kabupaten Gresik`,
+          data.settings.margin.left,
+          doc.internal.pageSize.height - 5
+        );
+      }
+    });
+
+    doc.save(fileName);
+    showToast(`Dokumen PDF Kecamatan ${state.selectedKecamatan} (${dataToExport.length} data) berhasil diunduh!`, "success");
+  } catch (err) {
+    console.error("Gagal export PDF:", err);
+    showToast("Gagal ekspor ke PDF: " + err.message, "error");
+  }
 }
 
 // Sinkronisasi Pembaruan Online dari Server Data di Latar Belakang
@@ -1073,10 +1266,10 @@ async function syncOnlineData(isManual = false) {
   if (isManual) {
     setLoadingState(true);
     updateStatus("loading", "Menyinkronkan data...");
-    showToast("Menghubungkan ke Google Sheets pusat...", "info");
+    showToast("Menghubungkan ke server data pusat...", "info");
   }
 
-  // Prioritaskan endpoint langsung Google Sheets dengan cache-buster timestamp
+  // Prioritaskan endpoint langsung server data pusat dengan cache-buster timestamp
   const directEndpoint = `${REMOTE_DATA_ENDPOINT}&_t=${Date.now()}`;
   const isFileProtocol = window.location.protocol === "file:";
 
@@ -1119,12 +1312,12 @@ async function syncOnlineData(isManual = false) {
       if (isFileProtocol) {
         updateStatus("active", `Data Aktif (${state.rawRows.length.toLocaleString("id-ID")} Data)`);
         if (isManual) {
-          showToast(`Menampilkan seluruh ${state.rawRows.length.toLocaleString("id-ID")} data. Browser membatasi sinkronisasi live langsung pada protokol file:// lokal karena kebijakan keamanan origin. Sinkronisasi live Google Sheets otomatis aktif penuh saat di-deploy ke GitHub Pages.`, "info");
+          showToast(`Menampilkan seluruh ${state.rawRows.length.toLocaleString("id-ID")} data. Browser membatasi sinkronisasi langsung pada protokol file:// lokal karena kebijakan keamanan origin. Sinkronisasi data pusat otomatis aktif penuh saat di-deploy ke GitHub Pages.`, "info");
         }
       } else {
         updateStatus("active", `Terhubung (${state.rawRows.length.toLocaleString("id-ID")} Data)`);
         if (isManual) {
-          showToast("Data sudah yang paling mutakhir atau server Google sedang sibuk. Menampilkan data tersimpan.", "info");
+          showToast("Data sudah yang paling mutakhir atau server pusat sedang sibuk. Menampilkan data tersimpan.", "info");
         }
       }
     } else {

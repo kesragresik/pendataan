@@ -16,6 +16,16 @@
       document.write('<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"><\/script>');
     }
   </script>
+
+  <!-- Library PDF (.pdf) Export (Offline first with CDN fallback) -->
+  <script src="js/jspdf.umd.min.js"></script>
+  <script src="js/jspdf.plugin.autotable.min.js"></script>
+  <script>
+    if (typeof window.jspdf === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"><\/script>');
+    }
+  </script>
 </head>
 <body>
 
@@ -26,13 +36,7 @@
     <div class="nav-container">
       <div class="brand-section">
         <div class="brand-icon">
-          <!-- Building / Civic Monument SVG -->
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 21h18"></path>
-            <path d="M5 21V7l7-4 7 4v14"></path>
-            <path d="M9 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"></path>
-            <path d="M10 21v-5a2 2 0 1 1 4 0v5"></path>
-          </svg>
+          <img src="https://gresikkab.go.id/storage/setting/1767981476_logo-footer.png" alt="Logo Pemkab Gresik" class="brand-logo-img" onerror="this.onerror=null; this.src='img/logo-gresik.png';">
         </div>
         <div class="brand-info">
           <h1>
@@ -107,22 +111,6 @@
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
-          </div>
-
-          <!-- Chip Ringkasan Metrik Cepat -->
-          <div class="landing-stats-row">
-            <div class="landing-stat-chip">
-              <span>🏛️ Wilayah:</span>
-              <strong>18 Kecamatan</strong>
-            </div>
-            <div class="landing-stat-chip">
-              <span>📍 Total Terdata:</span>
-              <strong id="landingTotalTempatIbadah">1.127 Tempat Ibadah</strong>
-            </div>
-            <div class="landing-stat-chip">
-              <span>📊 Ekspor Otomatis:</span>
-              <strong>1 Wilayah Penuh (.xlsx)</strong>
-            </div>
           </div>
         </div>
       </div>
@@ -237,7 +225,7 @@
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="searchInput" class="search-input" placeholder="Cari nama, desa, alamat, atau pengurus...">
+            <input type="text" id="searchInput" class="search-input" placeholder="Cari data..." autocomplete="off">
             <button type="button" class="search-clear" id="searchClearBtn" title="Bersihkan pencarian">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -248,12 +236,12 @@
 
           <!-- Filter Dropdown Jenis / Lembaga (Khusus yang ada di Kecamatan ini) -->
           <select id="categoryFilterSelect" class="filter-select" title="Filter Jenis Tempat Ibadah">
-            <option value="ALL">Semua Jenis Tempat Ibadah</option>
+            <option value="ALL">Semua Jenis</option>
           </select>
 
           <!-- Filter Dropdown Status Kelengkapan -->
           <select id="statusFilterSelect" class="filter-select" title="Filter Status Kelengkapan">
-            <option value="ALL">Semua Status Kelengkapan</option>
+            <option value="ALL">Status Kelengkapan</option>
             <option value="sudah lengkap">Sudah Lengkap</option>
             <option value="belum lengkap">Belum Lengkap</option>
           </select>
@@ -270,7 +258,7 @@
 
         <div class="controls-right">
           <!-- Tombol Export Excel: PASTI 1 KECAMATAN PENUH -->
-          <button class="btn btn-success" id="exportExcelBtn" title="Unduh seluruh data tempat ibadah kecamatan ini dalam format Excel .xlsx">
+          <button class="btn btn-success" id="exportExcelBtn" title="Unduh seluruh data tempat ibadah kecamatan ini dalam format Excel (.xlsx)">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-4h2v4zm0-6h-2V7h2v4zm4 6h-2v-2h2v2zm0-4h-2V7h2v6zm-8 4H8v-2h2v2zm0-4H8V7h2v6z"/>
             </svg>
@@ -278,14 +266,16 @@
             <span class="badge-kec-scope" id="exportKecBadge">1 Kec</span>
           </button>
 
-          <!-- Tombol Export CSV: PASTI 1 KECAMATAN PENUH -->
-          <button class="btn btn-secondary" id="exportCsvBtn" title="Unduh format CSV seluruh data kecamatan ini">
+          <!-- Tombol Export PDF: PASTI 1 KECAMATAN PENUH -->
+          <button class="btn btn-secondary" id="exportPdfBtn" title="Unduh seluruh data tempat ibadah kecamatan ini dalam format PDF (.pdf)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
-            <span>CSV</span>
+            <span>Ekspor PDF</span>
           </button>
         </div>
       </section>

@@ -114,20 +114,19 @@ body {
 }
 
 .brand-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
+  flex-shrink: 0;
+  background: transparent;
 }
 
-.brand-icon svg {
-  width: 24px;
-  height: 24px;
+.brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .brand-info h1 {
@@ -275,6 +274,19 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-pdf {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-pdf:hover {
+  background-color: var(--bg-subtle);
+  border-color: var(--text-muted);
+  transform: translateY(-1px);
+}
+
 .btn-icon-only {
   padding: 0.5rem;
   border-radius: var(--radius-md);
@@ -398,26 +410,27 @@ body {
 
 .search-box {
   position: relative;
-  min-width: 240px;
-  max-width: 380px;
-  flex: 1;
+  width: 175px;
+  min-width: 160px;
+  max-width: 185px;
+  flex: 0 0 auto;
 }
 
-.search-box svg {
+.search-box > svg:first-child {
   position: absolute;
-  left: 0.85rem;
+  left: 0.65rem;
   top: 50%;
   transform: translateY(-50%);
-  width: 17px;
-  height: 17px;
+  width: 14px;
+  height: 14px;
   color: var(--text-muted);
   pointer-events: none;
 }
 
 .search-input {
   width: 100%;
-  padding: 0.55rem 2.2rem 0.55rem 2.4rem;
-  font-size: 0.85rem;
+  padding: 0.5rem 1.65rem 0.5rem 1.85rem;
+  font-size: 0.825rem;
   font-family: inherit;
   background-color: var(--bg-subtle);
   border: 1px solid var(--border-color);
@@ -435,19 +448,31 @@ body {
 
 .search-clear {
   position: absolute;
-  right: 0.65rem;
+  right: 0.35rem;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
+  background: transparent;
   border: none;
   color: var(--text-muted);
   cursor: pointer;
   display: none;
   align-items: center;
   justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  z-index: 5;
+}
+
+.search-clear svg {
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
 }
 
 .search-clear:hover {
+  background-color: var(--bg-hover);
   color: var(--text-main);
 }
 
@@ -598,6 +623,13 @@ body {
   font-size: 0.75rem;
   width: 44px;
   text-align: center;
+  white-space: nowrap;
+}
+
+.col-jenis,
+th.col-jenis,
+td.col-jenis {
+  width: max-content;
   white-space: nowrap;
 }
 
@@ -1046,29 +1078,30 @@ body {
   margin-bottom: 0.85rem;
 }
 
-.kecamatan-card-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
-  color: var(--primary-800);
+.kecamatan-card-count-text {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
+  align-items: baseline;
+  gap: 0.35rem;
+  text-align: right;
   flex-shrink: 0;
-  transition: var(--transition);
 }
 
-[data-theme="dark"] .kecamatan-card-icon {
-  background: rgba(16, 185, 129, 0.18);
+.count-text-number {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--primary-600);
+  font-feature-settings: "tnum";
+}
+
+[data-theme="dark"] .count-text-number {
   color: #34d399;
 }
 
-.kecamatan-card:hover .kecamatan-card-icon {
-  transform: scale(1.08);
-  background: var(--primary-600);
-  color: #fff;
+.count-text-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
 .kecamatan-card-title-wrap {
@@ -1090,37 +1123,12 @@ body {
   font-weight: 500;
 }
 
-.kecamatan-count-box {
-  margin: 0.4rem 0 0.85rem 0;
-  display: flex;
-  align-items: baseline;
-  gap: 0.45rem;
-}
-
-.kecamatan-count-number {
-  font-size: 2.1rem;
-  font-weight: 800;
-  color: var(--primary-700);
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
-
-[data-theme="dark"] .kecamatan-count-number {
-  color: #34d399;
-}
-
-.kecamatan-count-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
 /* Category breakdown preview */
 .kecamatan-breakdown {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin-bottom: 1rem;
+  margin: 0.85rem 0 1rem 0;
 }
 
 .breakdown-chip {
@@ -1143,11 +1151,10 @@ body {
 
 .kecamatan-progress-labels {
   display: flex;
-  justify-content: space-between;
-  font-size: 0.725rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 0.35rem;
+  justify-content: flex-start;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
 }
 
 .kecamatan-progress-labels .lengkap-text {
