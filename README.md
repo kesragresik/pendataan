@@ -30,13 +30,13 @@ Dapat langsung dibuka cukup dengan **klik ganda (double-click)** pada file [`ind
    - **Pagination Rapi:** Pilihan 15, 25, 50, 100 baris atau tampilkan semua baris.
    - **Pengurutan Kolom (Sorting):** Klik judul kolom untuk mengurutkan (A-Z / Z-A / Angka).
 
-### C. Aturan Ekspor Excel (.xlsx) & CSV
+### C. Aturan Ekspor Excel (.xlsx) & PDF (.pdf)
 * **Prinsip Utama:** Ekspor **SELALU MENGUNDUH 1 KECAMATAN PENUH (100% DATA WILAYAH TERSEBUT)**, terlepas dari filter atau pencarian yang sedang aktif di layar tabel.
-  - *Contoh Kasus:* Jika di Kecamatan Kebomas terdapat 62 data tempat ibadah, dan pengguna melakukan pencarian kata kunci tertentu sehingga di layar hanya tersisa 5 baris data, tombol **"Ekspor Excel"** tetap akan mengunduh **seluruh 62 data tempat ibadah Kecamatan Kebomas**!
-* **Nama Berkas Otomatis Sesuai Wilayah:**
-  - `Data_Tempat_Ibadah_Kecamatan_KEBOMAS_[TANGGAL].xlsx`
-  - `Data_Tempat_Ibadah_Kecamatan_MANYAR_[TANGGAL].xlsx`
-* **Nama Sheet Excel:** Tab sheet di dalam Microsoft Excel otomatis dinamai sesuai nama kecamatan (misal sheet `KEBOMAS`). Lebar kolom diatur otomatis agar rapi saat dicetak atau diarsip.
+  - *Contoh Kasus:* Jika di Kecamatan Kebomas terdapat 62 data tempat ibadah, dan pengguna melakukan pencarian kata kunci tertentu sehingga di layar hanya tersisa 5 baris data, tombol **"Ekspor Excel"** maupun **"Ekspor PDF"** tetap akan mengunduh **seluruh 62 data tempat ibadah Kecamatan Kebomas**!
+* **Format Nama Berkas Resmi:**
+  - `Data_Pendataan_Tempat_Ibadah_KEBOMAS_10-Oktober-2026.xlsx`
+  - `Data_Pendataan_Tempat_Ibadah_KEBOMAS_10-Oktober-2026.pdf`
+* **Nama Tab Excel:** Tab di dalam Microsoft Excel otomatis dinamai sesuai nama kecamatan (misal `KEBOMAS`). Lebar kolom diatur otomatis agar rapi saat dicetak atau diarsip.
 
 ---
 
@@ -45,4 +45,4 @@ Dapat langsung dibuka cukup dengan **klik ganda (double-click)** pada file [`ind
 1. Buka File Explorer di komputer Anda.
 2. Cukup klik ganda (*double-click*) file:
    👉 **[`index.html`](file:///c:/Users/W/Downloads/Compressed/web%20pendataan/index.html)**
-3. Web akan langsung terbuka di browser Anda (Google Chrome, Microsoft Edge, Firefox, dll.) dalam 0 detik!
+3. Web akan langsung terbuka di browser Anda (Chrome, Microsoft Edge, Firefox, dll.) dalam 0 detik!
