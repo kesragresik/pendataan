@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistem Pendataan Tempat Ibadah - Kesejahteraan Sosial Sekretariat Daerah</title>
-  <meta name="description" content="Dashboard tabel interaktif pendataan tempat ibadah dengan pencarian instan, filter jenis, kecamatan, dan ekspor Excel otomatis.">
-  
+  <meta name="description"
+    content="Dashboard tabel interaktif pendataan tempat ibadah dengan pencarian instan, filter jenis, kecamatan, dan ekspor Excel otomatis.">
+
   <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="css/style.css">
 
@@ -27,6 +29,7 @@
     }
   </script>
 </head>
+
 <body>
 
   <!-- ======================================================================
@@ -36,7 +39,8 @@
     <div class="nav-container">
       <div class="brand-section">
         <div class="brand-icon">
-          <img src="https://gresikkab.go.id/storage/setting/1767981476_logo-footer.png" alt="Logo Pemkab Gresik" class="brand-logo-img" onerror="this.onerror=null; this.src='img/logo-gresik.png';">
+          <img src="https://gresikkab.go.id/storage/setting/1767981476_logo-footer.png" alt="Logo Pemkab Gresik"
+            class="brand-logo-img" onerror="this.onerror=null; this.src='img/logo-gresik.png';">
         </div>
         <div class="brand-info">
           <h1>
@@ -61,7 +65,7 @@
             <polyline points="1 20 1 14 7 14"></polyline>
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
           </svg>
-          <span>Segarkan Data</span>
+          <span>Refresh Data</span>
         </button>
 
         <!-- Toggle Mode Terang/Gelap -->
@@ -83,7 +87,7 @@
          1. LANDING VIEW: PILIH KECAMATAN TERLEBIH DAHULU (MANDATORY GATEWAY)
          ====================================================================== -->
     <section id="landingView" class="landing-view">
-      
+
       <!-- Hero Sambutan & Instruksi -->
       <div class="landing-hero">
         <div class="hero-pill-badge">
@@ -93,9 +97,12 @@
           <span>Kabupaten Gresik &bull; Bagian Kesejahteraan Sosial</span>
         </div>
         <h2>Pilih Wilayah Kecamatan</h2>
-        <p>
-          Silakan pilih salah satu kecamatan di bawah ini untuk masuk ke tabel data tempat ibadah. Seluruh verifikasi data, pencarian, dan berkas ekspor Excel akan difokuskan khusus untuk wilayah kecamatan yang Anda pilih.
-        </p>
+
+        <!-- Total Data Besar di Hero Section -->
+        <div class="hero-total-stat">
+          <span class="hero-total-number" id="landingHeroTotalNumber">1.128</span>
+          <span class="hero-total-label">Total Data Tempat Ibadah</span>
+        </div>
 
         <div class="landing-toolbar">
           <!-- Input Pencarian Cepat Nama Kecamatan -->
@@ -104,8 +111,10 @@
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="landingKecamatanSearch" class="landing-search-input" placeholder="Cari nama kecamatan (misal: Kebomas, Manyar, Sangkapura, Driyorejo)..." autocomplete="off">
-            <button type="button" class="landing-search-clear" id="landingKecamatanClear" style="display: none;" title="Bersihkan pencarian">
+            <input type="text" id="landingKecamatanSearch" class="landing-search-input"
+              placeholder="Cari nama kecamatan (misal: Kebomas, Manyar, Sangkapura, Driyorejo)..." autocomplete="off">
+            <button type="button" class="landing-search-clear" id="landingKecamatanClear" style="display: none;"
+              title="Bersihkan pencarian">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -128,7 +137,8 @@
           <line x1="8" y1="11" x2="14" y2="11"></line>
         </svg>
         <h3>Kecamatan Tidak Ditemukan</h3>
-        <p>Tidak ada kecamatan di Kabupaten Gresik dengan nama tersebut. Silakan periksa kembali ejaan pencarian Anda.</p>
+        <p>Tidak ada kecamatan di Kabupaten Gresik dengan nama tersebut. Silakan periksa kembali ejaan pencarian Anda.
+        </p>
       </div>
 
     </section>
@@ -148,23 +158,22 @@
             </svg>
             <span id="activeKecName">KECAMATAN</span>
           </span>
-          <div class="active-kec-desc">
-            Menampilkan data tempat ibadah khusus wilayah <strong id="activeKecNameText">Kecamatan</strong> (<span id="activeKecTotalCount">0</span> total data)
-          </div>
         </div>
 
         <div class="active-kec-actions">
-          <div class="export-hint-pill" title="Aturan Sistem: Ekspor Excel selalu mengunduh 1 kecamatan utuh, bukan hasil filter">
+          <div class="export-hint-pill"
+            title="Aturan Sistem: Ekspor Excel selalu mengunduh 1 kecamatan utuh, bukan hasil filter">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="16" x2="12" y2="12"></line>
               <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
-            <span>Ekspor Excel mengunduh 1 kecamatan penuh</span>
+            <span>Ekspor Excel mengunduh data penuh</span>
           </div>
 
           <!-- Tombol Ganti Kecamatan untuk Kembali ke List Landing -->
-          <button type="button" class="btn-ganti-kecamatan" id="changeKecamatanBtn" title="Kembali ke halaman pemilihan kecamatan">
+          <button type="button" class="btn-ganti-kecamatan" id="changeKecamatanBtn"
+            title="Kembali ke halaman pemilihan kecamatan">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
@@ -258,16 +267,19 @@
 
         <div class="controls-right">
           <!-- Tombol Export Excel: PASTI 1 KECAMATAN PENUH -->
-          <button class="btn btn-success" id="exportExcelBtn" title="Unduh seluruh data tempat ibadah kecamatan ini dalam format Excel (.xlsx)">
+          <button class="btn btn-success" id="exportExcelBtn"
+            title="Unduh seluruh data tempat ibadah kecamatan ini dalam format Excel (.xlsx)">
             <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-4h2v4zm0-6h-2V7h2v4zm4 6h-2v-2h2v2zm0-4h-2V7h2v6zm-8 4H8v-2h2v2zm0-4H8V7h2v6z"/>
+              <path
+                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-4h2v4zm0-6h-2V7h2v4zm4 6h-2v-2h2v2zm0-4h-2V7h2v6zm-8 4H8v-2h2v2zm0-4H8V7h2v6z" />
             </svg>
             <span>Ekspor Excel</span>
             <span class="badge-kec-scope" id="exportKecBadge">1 Kec</span>
           </button>
 
           <!-- Tombol Export PDF: PASTI 1 KECAMATAN PENUH -->
-          <button class="btn btn-secondary" id="exportPdfBtn" title="Unduh seluruh data tempat ibadah kecamatan ini dalam format PDF (.pdf)">
+          <button class="btn btn-secondary" id="exportPdfBtn"
+            title="Unduh seluruh data tempat ibadah kecamatan ini dalam format PDF (.pdf)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
@@ -282,7 +294,7 @@
 
       <!-- Card Tabel Data Interaktif -->
       <section class="table-card">
-        
+
         <!-- Loading State -->
         <div id="loadingState" class="state-container" style="display: none;">
           <svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -346,4 +358,5 @@
   <!-- Client Application Script -->
   <script src="js/app.js"></script>
 </body>
+
 </html>

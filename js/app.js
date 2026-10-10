@@ -23,13 +23,14 @@ const state = {
   currentPage: 1,
   rowsPerPage: 25,
   sortColIndex: -1,
-  sortAsc: true,
+  sortAsc: false,                // Default descending saat kolom timestamp aktif
   searchQuery: "",
   filterJenisVal: "ALL",
   filterStatusVal: "ALL",
   jenisColIdx: -1,
   kecamatanColIdx: -1,
   statusColIdx: -1,
+  timestampColIdx: -1,
   lastUpdated: null
 };
 
@@ -330,7 +331,11 @@ function loadCSVToState(csvContent) {
   detectKeyColumns();
   computeKecamatanSummaries();
 
-  // Update metrik ringkasan di landing hero
+  // Update total data besar di landing hero
+  const heroTotalNumberEl = document.getElementById("landingHeroTotalNumber");
+  if (heroTotalNumberEl) {
+    heroTotalNumberEl.textContent = state.rawRows.length.toLocaleString("id-ID");
+  }
   const totalLandingEl = document.getElementById("landingTotalTempatIbadah");
   if (totalLandingEl) {
     totalLandingEl.textContent = `${state.rawRows.length.toLocaleString("id-ID")} Tempat Ibadah`;
@@ -344,6 +349,16 @@ function loadCSVToState(csvContent) {
       const val = (row[state.kecamatanColIdx] || "").trim().toUpperCase();
       return val === state.selectedKecamatan.toUpperCase();
     });
+    if (state.timestampColIdx !== -1) {
+      state.kecamatanAllRows.sort((a, b) => {
+        const timeA = parseTimestampValue(a[state.timestampColIdx]);
+        const timeB = parseTimestampValue(b[state.timestampColIdx]);
+        if (!isNaN(timeA) && !isNaN(timeB)) return timeB - timeA;
+        if (!isNaN(timeA)) return -1;
+        if (!isNaN(timeB)) return 1;
+        return 0;
+      });
+    }
     populateCategoryDropdownForSelectedKecamatan();
     applyFilters();
   }
@@ -357,6 +372,13 @@ function detectKeyColumns() {
   state.jenisColIdx = state.rawHeaders.findIndex(h => /jenis|lembaga/i.test(h));
   state.kecamatanColIdx = state.rawHeaders.findIndex(h => /kecamatan/i.test(h));
   state.statusColIdx = state.rawHeaders.findIndex(h => /apakah sudah terisi|lengkap/i.test(h));
+  state.timestampColIdx = state.rawHeaders.findIndex(h => /timestamp|waktu|tanggal/i.test(h));
+
+  // Default otomatis sorting descending pada kolom timestamp jika ditemukan
+  if (state.timestampColIdx !== -1) {
+    state.sortColIndex = state.timestampColIdx;
+    state.sortAsc = false;
+  }
 }
 
 // Hitung Rangkuman 18 Kecamatan Gresik Secara Dinamis
@@ -615,6 +637,21 @@ function selectKecamatan(kecamatanName) {
     return val === kecamatanName.toUpperCase();
   });
 
+  // Otomatis urutkan default seluruh data kecamatan berdasarkan timestamp descending
+  if (state.timestampColIdx !== -1) {
+    state.sortColIndex = state.timestampColIdx;
+    state.sortAsc = false;
+
+    state.kecamatanAllRows.sort((a, b) => {
+      const timeA = parseTimestampValue(a[state.timestampColIdx]);
+      const timeB = parseTimestampValue(b[state.timestampColIdx]);
+      if (!isNaN(timeA) && !isNaN(timeB)) return timeB - timeA;
+      if (!isNaN(timeA)) return -1;
+      if (!isNaN(timeB)) return 1;
+      return 0;
+    });
+  }
+
   // 2. Reset kontrol & filter di dashboard tabel
   state.currentPage = 1;
   state.searchQuery = "";
@@ -632,13 +669,11 @@ function selectKecamatan(kecamatanName) {
   // 3. Update info banner aktif kecamatan
   const activeBadgeName = document.getElementById("activeKecName");
   const activeDescText = document.getElementById("activeKecNameText");
-  const activeTotalText = document.getElementById("activeKecTotalCount");
   const statsKecName = document.getElementById("statsKecName");
   const exportKecBadge = document.getElementById("exportKecBadge");
 
   if (activeBadgeName) activeBadgeName.textContent = `KEC. ${kecamatanName}`;
   if (activeDescText) activeDescText.textContent = `Kecamatan ${kecamatanName}`;
-  if (activeTotalText) activeTotalText.textContent = state.kecamatanAllRows.length.toLocaleString("id-ID");
   if (statsKecName) statsKecName.textContent = kecamatanName;
   if (exportKecBadge) exportKecBadge.textContent = `Kec. ${kecamatanName}`;
 
@@ -706,6 +741,34 @@ function populateCategoryDropdownForSelectedKecamatan() {
   }
 }
 
+/**
+ * Parse string timestamp/tanggal menjadi nilai milidetik (ms) untuk pengurutan akurat
+ * Mendukung format: M/D/YYYY, DD/MM/YYYY, YYYY-MM-DD, ISO, dengan/tanpa jam dan menit
+ */
+function parseTimestampValue(val) {
+  if (!val) return NaN;
+  const str = val.toString().trim();
+  if (!str) return NaN;
+
+  // 1. Coba Date.parse bawaan
+  const parsedMs = Date.parse(str);
+  if (!isNaN(parsedMs)) return parsedMs;
+
+  // 2. Format DD/MM/YYYY atau DD-MM-YYYY (dengan atau tanpa jam:menit:detik)
+  const parts = str.split(/[ /:T-]/).filter(Boolean);
+  if (parts.length >= 3) {
+    const p0 = parseInt(parts[0], 10);
+    const p1 = parseInt(parts[1], 10);
+    const p2 = parseInt(parts[2], 10);
+    if (p0 > 0 && p0 <= 31 && p1 > 0 && p1 <= 12 && p2 > 1000) {
+      const d = new Date(p2, p1 - 1, p0, parseInt(parts[3] || 0, 10), parseInt(parts[4] || 0, 10), parseInt(parts[5] || 0, 10));
+      if (!isNaN(d.getTime())) return d.getTime();
+    }
+  }
+
+  return NaN;
+}
+
 // ==========================================================================
 // FILTERING & PENGURUTAN DI DALAM KECAMATAN TERPILIH
 // ==========================================================================
@@ -751,11 +814,24 @@ function applyFilters() {
   if (state.sortColIndex !== -1) {
     const idx = state.sortColIndex;
     const isAsc = state.sortAsc;
+    const isTimestampCol = (idx === state.timestampColIdx) || /timestamp|waktu|tanggal/i.test(state.rawHeaders[idx] || "");
 
     result.sort((a, b) => {
       const valA = (a[idx] || "").toString().trim();
       const valB = (b[idx] || "").toString().trim();
 
+      // Prioritas 1: Jika kolom adalah Timestamp / Tanggal
+      if (isTimestampCol) {
+        const timeA = parseTimestampValue(valA);
+        const timeB = parseTimestampValue(valB);
+        if (!isNaN(timeA) && !isNaN(timeB)) {
+          return isAsc ? timeA - timeB : timeB - timeA;
+        }
+        if (!isNaN(timeA)) return isAsc ? -1 : 1;
+        if (!isNaN(timeB)) return isAsc ? 1 : -1;
+      }
+
+      // Prioritas 2: Angka murni
       const numA = parseFloat(valA.replace(/[^0-9.-]+/g, ""));
       const numB = parseFloat(valB.replace(/[^0-9.-]+/g, ""));
 
@@ -763,6 +839,7 @@ function applyFilters() {
         return isAsc ? numA - numB : numB - numA;
       }
 
+      // Prioritas 3: Teks biasa (alfabetis / numerik)
       return isAsc
         ? valA.localeCompare(valB, undefined, { numeric: true })
         : valB.localeCompare(valA, undefined, { numeric: true });
@@ -835,7 +912,8 @@ function renderTable() {
         state.sortAsc = !state.sortAsc;
       } else {
         state.sortColIndex = index;
-        state.sortAsc = true;
+        // Jika kolom timestamp yang diklik, urutkan descending (data terbaru dahulu)
+        state.sortAsc = (index === state.timestampColIdx) ? false : true;
       }
       applyFilters();
     });
@@ -1266,7 +1344,7 @@ async function syncOnlineData(isManual = false) {
   if (isManual) {
     setLoadingState(true);
     updateStatus("loading", "Menyinkronkan data...");
-    showToast("Menghubungkan ke server data pusat...", "info");
+    showToast("Menghubungkan ke server data ...", "info");
   }
 
   // Prioritaskan endpoint langsung server data pusat dengan cache-buster timestamp
@@ -1312,12 +1390,12 @@ async function syncOnlineData(isManual = false) {
       if (isFileProtocol) {
         updateStatus("active", `Data Aktif (${state.rawRows.length.toLocaleString("id-ID")} Data)`);
         if (isManual) {
-          showToast(`Menampilkan seluruh ${state.rawRows.length.toLocaleString("id-ID")} data. Browser membatasi sinkronisasi langsung pada protokol file:// lokal karena kebijakan keamanan origin. Sinkronisasi data pusat otomatis aktif penuh saat di-deploy ke GitHub Pages.`, "info");
+          showToast(`Menampilkan seluruh ${state.rawRows.length.toLocaleString("id-ID")} data. Browser membatasi sinkronisasi langsung pada protokol file:// lokal karena kebijakan keamanan origin. Sinkronisasi data otomatis aktif penuh saat di-deploy ke GitHub Pages.`, "info");
         }
       } else {
         updateStatus("active", `Terhubung (${state.rawRows.length.toLocaleString("id-ID")} Data)`);
         if (isManual) {
-          showToast("Data sudah yang paling mutakhir atau server pusat sedang sibuk. Menampilkan data tersimpan.", "info");
+          showToast("Data sudah yang paling mutakhir atau server sedang sibuk. Menampilkan data tersimpan.", "info");
         }
       }
     } else {

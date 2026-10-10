@@ -208,9 +208,20 @@ body {
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.6); opacity: 0; }
-  100% { transform: scale(1); opacity: 0; }
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
 }
 
 /* ==========================================================================
@@ -263,7 +274,8 @@ body {
 }
 
 .btn-success {
-  background-color: #107c41; /* Microsoft Excel Green */
+  background-color: #107c41;
+  /* Microsoft Excel Green */
   color: #fff;
   box-shadow: 0 2px 6px rgba(16, 124, 65, 0.25);
 }
@@ -416,7 +428,7 @@ body {
   flex: 0 0 auto;
 }
 
-.search-box > svg:first-child {
+.search-box>svg:first-child {
   position: absolute;
   left: 0.65rem;
   top: 50%;
@@ -649,36 +661,43 @@ td.col-jenis {
   color: #065f46;
   border: 1px solid #a7f3d0;
 }
+
 .badge-musholla {
   background-color: #e6fcf5;
   color: #0c8599;
   border: 1px solid #99e9f2;
 }
+
 .badge-kristen {
   background-color: #eff6ff;
   color: #1e40af;
   border: 1px solid #bfdbfe;
 }
+
 .badge-katolik {
   background-color: #eef2ff;
   color: #3730a3;
   border: 1px solid #c7d2fe;
 }
+
 .badge-hindu {
   background-color: #fff7ed;
   color: #9a3412;
   border: 1px solid #fed7aa;
 }
+
 .badge-buddha {
   background-color: #fefce8;
   color: #854d0e;
   border: 1px solid #fef08a;
 }
+
 .badge-khonghucu {
   background-color: #fdf2f8;
   color: #9d174d;
   border: 1px solid #fbcfe8;
 }
+
 .badge-lembaga {
   background-color: #f5f3ff;
   color: #5b21b6;
@@ -699,14 +718,53 @@ td.col-jenis {
   font-weight: 700;
 }
 
-[data-theme="dark"] .badge-islam { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
-[data-theme="dark"] .badge-musholla { background-color: rgba(12, 133, 153, 0.15); color: #22b8cf; border-color: rgba(12, 133, 153, 0.3); }
-[data-theme="dark"] .badge-kristen { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
-[data-theme="dark"] .badge-katolik { background-color: rgba(99, 102, 241, 0.15); color: #818cf8; border-color: rgba(99, 102, 241, 0.3); }
-[data-theme="dark"] .badge-hindu { background-color: rgba(249, 115, 22, 0.15); color: #fb923c; border-color: rgba(249, 115, 22, 0.3); }
-[data-theme="dark"] .badge-buddha { background-color: rgba(234, 179, 8, 0.15); color: #facc15; border-color: rgba(234, 179, 8, 0.3); }
-[data-theme="dark"] .badge-khonghucu { background-color: rgba(236, 72, 153, 0.15); color: #f472b6; border-color: rgba(236, 72, 153, 0.3); }
-[data-theme="dark"] .badge-lembaga { background-color: rgba(124, 58, 237, 0.15); color: #a78bfa; border-color: rgba(124, 58, 237, 0.3); }
+[data-theme="dark"] .badge-islam {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .badge-musholla {
+  background-color: rgba(12, 133, 153, 0.15);
+  color: #22b8cf;
+  border-color: rgba(12, 133, 153, 0.3);
+}
+
+[data-theme="dark"] .badge-kristen {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .badge-katolik {
+  background-color: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+[data-theme="dark"] .badge-hindu {
+  background-color: rgba(249, 115, 22, 0.15);
+  color: #fb923c;
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+[data-theme="dark"] .badge-buddha {
+  background-color: rgba(234, 179, 8, 0.15);
+  color: #facc15;
+  border-color: rgba(234, 179, 8, 0.3);
+}
+
+[data-theme="dark"] .badge-khonghucu {
+  background-color: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+  border-color: rgba(236, 72, 153, 0.3);
+}
+
+[data-theme="dark"] .badge-lembaga {
+  background-color: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+  border-color: rgba(124, 58, 237, 0.3);
+}
 
 /* Coordinates & link styling */
 .link-cell {
@@ -805,7 +863,9 @@ td.col-jenis {
 }
 
 @keyframes spin {
-  100% { transform: rotate(360deg); }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .state-container h3 {
@@ -853,8 +913,15 @@ td.col-jenis {
 }
 
 @keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* ==========================================================================
@@ -875,8 +942,15 @@ td.col-jenis {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .landing-hero {
@@ -932,16 +1006,54 @@ td.col-jenis {
   font-weight: 800;
   letter-spacing: -0.025em;
   color: var(--text-main);
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.35rem;
   line-height: 1.25;
 }
 
-.landing-hero p {
+.hero-total-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0.4rem 0 1.5rem 0;
+  gap: 0.25rem;
+}
+
+.hero-total-number {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: var(--primary-700);
+  background: linear-gradient(135deg, #047857 0%, #10b981 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-variant-numeric: tabular-nums;
+  filter: drop-shadow(0 2px 8px rgba(16, 185, 129, 0.15));
+}
+
+[data-theme="dark"] .hero-total-number {
+  background: linear-gradient(135deg, #34d399 0%, #6ee7b7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 12px rgba(52, 211, 153, 0.2));
+}
+
+.hero-total-label {
+  font-size: 0.825rem;
+  font-weight: 600;
   color: var(--text-muted);
-  font-size: 1rem;
-  max-width: 680px;
-  line-height: 1.6;
-  margin-bottom: 1.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 640px) {
+  .hero-total-number {
+    font-size: 2.5rem;
+  }
 }
 
 /* Landing Search & Counter Toolbar */
@@ -1160,6 +1272,7 @@ td.col-jenis {
 .kecamatan-progress-labels .lengkap-text {
   color: var(--primary-700);
 }
+
 [data-theme="dark"] .kecamatan-progress-labels .lengkap-text {
   color: #34d399;
 }
@@ -1243,15 +1356,6 @@ td.col-jenis {
   box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
 }
 
-.active-kec-desc {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.active-kec-desc strong {
-  color: var(--text-main);
-}
-
 .active-kec-actions {
   display: flex;
   align-items: center;
@@ -1311,22 +1415,33 @@ td.col-jenis {
 
 /* Print Layout */
 @media print {
-  .navbar, .table-controls-card, .stats-banner, .table-footer, .toast-container {
+
+  .navbar,
+  .table-controls-card,
+  .stats-banner,
+  .table-footer,
+  .toast-container {
     display: none !important;
   }
-  body, .main-wrapper {
+
+  body,
+  .main-wrapper {
     background: #fff;
     padding: 0;
   }
+
   .table-card {
     border: none;
     box-shadow: none;
   }
+
   .table-responsive {
     max-height: none;
     overflow: visible;
   }
-  .data-table th, .data-table td {
+
+  .data-table th,
+  .data-table td {
     padding: 5px 8px;
     font-size: 9.5pt;
     border-color: #ccc;
