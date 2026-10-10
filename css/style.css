@@ -533,6 +533,7 @@ body {
   position: relative;
   scrollbar-width: thin;
   scrollbar-color: var(--text-light) transparent;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table-responsive::-webkit-scrollbar {
@@ -1050,12 +1051,6 @@ td.col-jenis {
   letter-spacing: 0.08em;
 }
 
-@media (max-width: 640px) {
-  .hero-total-number {
-    font-size: 2.5rem;
-  }
-}
-
 /* Landing Search & Counter Toolbar */
 .landing-toolbar {
   width: 100%;
@@ -1411,6 +1406,329 @@ td.col-jenis {
   border-radius: var(--radius-sm);
   margin-left: 0.3rem;
   text-transform: uppercase;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN & MOBILE OPTIMIZATIONS
+   ========================================================================== */
+
+/* 1. Tablet & Medium Screens (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .nav-container {
+    padding: 0.75rem 1.25rem;
+  }
+
+  .main-wrapper {
+    padding: 1rem 1.25rem;
+  }
+
+  .kecamatan-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+}
+
+/* 2. Small Tablets & Landscape Mobile (max-width: 768px) */
+@media (max-width: 768px) {
+  .table-controls-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .controls-left {
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .search-box {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .filter-select {
+    flex: 1 1 calc(50% - 0.35rem);
+    min-width: 130px;
+    font-size: 16px; /* Mencegah auto-zoom default browser mobile iOS Safari */
+  }
+
+  .search-input {
+    font-size: 16px; /* Mencegah auto-zoom default browser mobile iOS Safari */
+  }
+
+  .controls-right {
+    width: 100%;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .controls-right .btn {
+    flex: 1;
+    justify-content: center;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .stats-banner {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .stat-card:last-child {
+    grid-column: span 2;
+  }
+
+  .active-kecamatan-banner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.85rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .active-kec-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .btn-ganti-kecamatan {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* 3. Mobile Phones (max-width: 640px) */
+@media (max-width: 640px) {
+  html, body {
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Compact Navbar untuk Mobile */
+  .nav-container {
+    padding: 0.65rem 0.85rem;
+    gap: 0.5rem;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brand-info h1 {
+    font-size: 0.95rem;
+  }
+
+  .brand-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+  }
+
+  /* Sembunyikan teks instansi yang panjang di mobile agar header tidak sesak */
+  .brand-info p {
+    display: none;
+  }
+
+  /* Sederhanakan tombol refresh menjadi icon-only di mobile */
+  #refreshBtn {
+    padding: 0.5rem;
+    min-width: 38px;
+    height: 38px;
+    justify-content: center;
+  }
+
+  #refreshBtn span {
+    display: none;
+  }
+
+  #themeToggleBtn {
+    min-width: 38px;
+    height: 38px;
+  }
+
+  .status-badge {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.725rem;
+  }
+
+  /* Spacing Halaman Utama di Layar Ponsel */
+  .main-wrapper {
+    padding: 0.75rem 0.85rem;
+    gap: 0.85rem;
+  }
+
+  /* Hero Section Landing Page */
+  .landing-hero {
+    padding: 2rem 0.85rem 1.75rem 0.85rem;
+    border-radius: var(--radius-md);
+  }
+
+  .hero-pill-badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.65rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .landing-hero h2 {
+    font-size: 1.35rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .hero-total-number {
+    font-size: 2.5rem;
+  }
+
+  .hero-total-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+  }
+
+  .landing-search-input {
+    font-size: 16px; /* Mencegah auto-zoom default iOS Safari */
+    padding: 0.75rem 2.4rem 0.75rem 2.6rem;
+  }
+
+  .landing-search-box svg {
+    left: 0.9rem;
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Grid Kecamatan: 1 Kolom Penuh Ramah Sentuhan (Native Card Feed) */
+  .kecamatan-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .kecamatan-card {
+    padding: 1.1rem;
+    border-radius: var(--radius-md);
+  }
+
+  .count-text-number {
+    font-size: 1.35rem;
+  }
+
+  .kecamatan-card-title {
+    font-size: 1.05rem;
+  }
+
+  /* Kartu Statistik Cepat */
+  .stat-card {
+    padding: 0.75rem 0.85rem;
+    gap: 0.65rem;
+    border-radius: var(--radius-md);
+  }
+
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .stat-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .stat-value {
+    font-size: 1.15rem;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+  }
+
+  /* Filter Selects Full Width di Layar Sempit */
+  .filter-select {
+    flex: 1 1 100%;
+  }
+
+  /* Tabel Interaktif Mobile */
+  .table-responsive {
+    max-height: 60vh;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.65rem 0.65rem;
+    font-size: 0.785rem;
+  }
+
+  .th-content {
+    gap: 0.35rem;
+  }
+
+  .table-badge {
+    padding: 0.15rem 0.45rem;
+    font-size: 0.7rem;
+  }
+
+  /* Footer Tabel & Navigasi Halaman */
+  .table-footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.65rem;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .footer-info {
+    font-size: 0.75rem;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  .page-btn {
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.8rem;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Notifikasi Toast */
+  .toast-container {
+    bottom: 0.85rem;
+    left: 0.85rem;
+    right: 0.85rem;
+  }
+
+  .toast {
+    font-size: 0.8rem;
+    padding: 0.65rem 0.85rem;
+    width: 100%;
+  }
+}
+
+/* 4. Extra Small Mobile (max-width: 380px) */
+@media (max-width: 380px) {
+  .hero-total-number {
+    font-size: 2.15rem;
+  }
+
+  .stats-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card:last-child {
+    grid-column: span 1;
+  }
+
+  .active-kec-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .export-hint-pill {
+    display: none;
+  }
 }
 
 /* Print Layout */

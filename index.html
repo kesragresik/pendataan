@@ -59,7 +59,7 @@
         </div>
 
         <!-- Tombol Muat Ulang Data Online -->
-        <button class="btn btn-secondary" id="refreshBtn" title="Perbarui data terbaru dari server">
+        <button class="btn btn-secondary" id="refreshBtn" title="Perbarui data terbaru dari server" aria-label="Refresh Data">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="23 4 23 10 17 10"></polyline>
             <polyline points="1 20 1 14 7 14"></polyline>
@@ -112,7 +112,8 @@
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
             <input type="text" id="landingKecamatanSearch" class="landing-search-input"
-              placeholder="Cari nama kecamatan (misal: Kebomas, Manyar, Sangkapura, Driyorejo)..." autocomplete="off">
+              placeholder="Cari nama kecamatan (misal: Kebomas, Manyar, Sangkapura, Driyorejo)..." autocomplete="off"
+              autocorrect="off" autocapitalize="none" spellcheck="false">
             <button type="button" class="landing-search-clear" id="landingKecamatanClear" style="display: none;"
               title="Bersihkan pencarian">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -234,7 +235,8 @@
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="searchInput" class="search-input" placeholder="Cari data..." autocomplete="off">
+            <input type="text" id="searchInput" class="search-input" placeholder="Cari data..." autocomplete="off"
+              autocorrect="off" autocapitalize="none" spellcheck="false">
             <button type="button" class="search-clear" id="searchClearBtn" title="Bersihkan pencarian">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
