@@ -285,7 +285,7 @@ function initEventListeners() {
     });
   }
 
-  // 10. Tombol Unduh Kemenag (Excel .xlsx)
+  // 10. Tombol Unduh Data Kemenag (Excel .xlsx)
   const dlKemenagBtn = document.getElementById("downloadKemenagBtn");
   if (dlKemenagBtn) {
     dlKemenagBtn.addEventListener("click", () => {

@@ -59,7 +59,8 @@
         </div>
 
         <!-- Tombol Muat Ulang Data Online -->
-        <button class="btn btn-secondary" id="refreshBtn" title="Perbarui data terbaru dari server" aria-label="Refresh Data">
+        <button class="btn btn-secondary" id="refreshBtn" title="Perbarui data terbaru dari server"
+          aria-label="Refresh Data">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="23 4 23 10 17 10"></polyline>
             <polyline points="1 20 1 14 7 14"></polyline>
@@ -160,7 +161,8 @@
             <span id="activeKecName">KECAMATAN</span>
           </span>
 
-          <span class="kemenag-status-pill" id="dashboardKemenagPill" title="Data Resmi Tempat Ibadah Kementerian Agama">
+          <span class="kemenag-status-pill" id="dashboardKemenagPill"
+            title="Data Resmi Tempat Ibadah Kementerian Agama">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
               <path d="M2 17l10 5 10-5"></path>
@@ -252,7 +254,8 @@
       <!-- Tab Switcher: Pilih Dataset yang Ingin Ditampilkan & Diunduh -->
       <div class="dataset-switcher-card">
         <div class="dataset-tabs">
-          <button type="button" class="dataset-tab-btn active" id="tabKesraBtn" title="Lihat hasil pengisian data formulir kesra">
+          <button type="button" class="dataset-tab-btn active" id="tabKesraBtn"
+            title="Lihat hasil pengisian data formulir kesra">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
@@ -262,7 +265,8 @@
             <span>Data Pendataan Kesra</span>
             <span class="tab-count-badge" id="tabKesraBadge">0</span>
           </button>
-          <button type="button" class="dataset-tab-btn" id="tabKemenagBtn" title="Lihat data referensi resmi dari Kementerian Agama">
+          <button type="button" class="dataset-tab-btn" id="tabKemenagBtn"
+            title="Lihat data referensi resmi dari Kementerian Agama">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
               <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
               <path d="M2 17l10 5 10-5"></path>
@@ -273,7 +277,8 @@
           </button>
         </div>
         <div class="dataset-info-hint" id="datasetInfoHint">
-          <span id="datasetHintText">Menampilkan data formulir survei pendataan mandiri tempat ibadah di wilayah ini</span>
+          <span id="datasetHintText">Menampilkan data formulir survei pendataan mandiri tempat ibadah di wilayah
+            ini</span>
         </div>
       </div>
 
@@ -286,8 +291,8 @@
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="searchInput" class="search-input" placeholder="Cari nama, jenis, alamat..." autocomplete="off"
-              autocorrect="off" autocapitalize="none" spellcheck="false">
+            <input type="text" id="searchInput" class="search-input" placeholder="Cari nama, jenis, alamat..."
+              autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
             <button type="button" class="search-clear" id="searchClearBtn" title="Bersihkan pencarian">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -326,7 +331,7 @@
               <path
                 d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-4h2v4zm0-6h-2V7h2v4zm4 6h-2v-2h2v2zm0-4h-2V7h2v6zm-8 4H8v-2h2v2zm0-4H8V7h2v6z" />
             </svg>
-            <span>Unduh Kemenag</span>
+            <span>Unduh Data Kemenag</span>
             <span class="badge-kemenag-scope" id="kemenagDownloadBadge">0 Data</span>
           </button>
 
@@ -337,7 +342,7 @@
               <path
                 d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-4h2v4zm0-6h-2V7h2v4zm4 6h-2v-2h2v2zm0-4h-2V7h2v6zm-8 4H8v-2h2v2zm0-4H8V7h2v6z" />
             </svg>
-            <span>Ekspor Kesra</span>
+            <span>Ekspor Excel</span>
             <span class="badge-kec-scope" id="exportKecBadge">1 Kec</span>
           </button>
 
