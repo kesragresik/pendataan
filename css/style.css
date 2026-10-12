@@ -1725,10 +1725,376 @@ td.col-jenis {
     flex-direction: column;
     align-items: stretch;
   }
+}
 
-  .export-hint-pill {
-    display: none;
+/* ==========================================================================
+   KEMENAG DATASET & DOWNLOAD STYLING
+   ========================================================================== */
+
+/* 1. Hero Dual Stats */
+.hero-dual-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin: 1.25rem 0 1.5rem 0;
+  flex-wrap: wrap;
+}
+
+.hero-stat-divider {
+  width: 1px;
+  height: 48px;
+  background-color: var(--border-color);
+}
+
+.hero-total-number.kemenag-number {
+  color: var(--primary-600);
+}
+
+[data-theme="dark"] .hero-total-number.kemenag-number {
+  color: #34d399;
+}
+
+/* 2. Stat Icon Kemenag */
+.stat-icon.kemenag {
+  background-color: rgba(5, 150, 105, 0.12);
+  color: var(--primary-600);
+}
+
+[data-theme="dark"] .stat-icon.kemenag {
+  background-color: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+}
+
+.text-kemenag {
+  color: var(--primary-700);
+}
+
+[data-theme="dark"] .text-kemenag {
+  color: #34d399;
+}
+
+/* 3. Kemenag Status Pill in Banner */
+.kemenag-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-full);
+  font-size: 0.775rem;
+  font-weight: 700;
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--primary-700);
+  border: 1px solid rgba(5, 150, 105, 0.25);
+}
+
+[data-theme="dark"] .kemenag-status-pill {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* 4. Dataset Switcher Card & Tabs */
+.dataset-switcher-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: var(--shadow-xs);
+  flex-wrap: wrap;
+}
+
+.dataset-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: var(--bg-subtle);
+  padding: 0.3rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.dataset-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  outline: none;
+  font-family: inherit;
+}
+
+.dataset-tab-btn:hover {
+  color: var(--text-main);
+}
+
+.dataset-tab-btn.active {
+  background-color: var(--bg-card);
+  color: var(--primary-700);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .dataset-tab-btn.active {
+  color: #34d399;
+}
+
+.tab-count-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  background-color: var(--border-color);
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.dataset-tab-btn.active .tab-count-badge {
+  background-color: var(--primary-100);
+  color: var(--primary-800);
+}
+
+[data-theme="dark"] .dataset-tab-btn.active .tab-count-badge {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.tab-count-badge.badge-kemenag {
+  background-color: rgba(5, 150, 105, 0.15);
+  color: var(--primary-700);
+}
+
+[data-theme="dark"] .tab-count-badge.badge-kemenag {
+  background-color: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+
+.dataset-info-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* 5. Button Kemenag & Split Dropdown */
+.btn-kemenag {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  border: 1px solid #047857;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+  font-weight: 600;
+}
+
+.btn-kemenag:hover {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+
+.badge-kemenag-scope {
+  font-size: 0.725rem;
+  font-weight: 800;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  margin-left: 0.25rem;
+}
+
+.btn-group-dropdown {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.btn-group-dropdown .btn-kemenag:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-group-dropdown .btn-dropdown-toggle {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  padding: 0.5rem 0.55rem;
+}
+
+.btn-dropdown-toggle svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Dropdown Menu */
+.kemenag-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 120;
+  min-width: 260px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  animation: fadeInDown 0.15s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  background: transparent;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-main);
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-subtle);
+  color: var(--primary-700);
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+  color: #34d399;
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
+  color: var(--primary-600);
+}
+
+.dropdown-item-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.item-title {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.item-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* 6. Landing Cards Enhancements */
+.kecamatan-card-counts {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.count-pill-kemenag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.735rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-full);
+  background: rgba(5, 150, 105, 0.12);
+  color: var(--primary-700);
+  border: 1px solid rgba(5, 150, 105, 0.25);
+}
+
+[data-theme="dark"] .count-pill-kemenag {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.count-pill-kesra {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.735rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+
+/* Action button inside card footer */
+.btn-card-kemenag-dl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  background-color: rgba(5, 150, 105, 0.1);
+  color: var(--primary-700);
+  border: 1px solid rgba(5, 150, 105, 0.25);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.btn-card-kemenag-dl:hover {
+  background-color: var(--primary-600);
+  color: #ffffff;
+  border-color: var(--primary-600);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .btn-card-kemenag-dl {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .btn-card-kemenag-dl:hover {
+  background-color: var(--primary-600);
+  color: #ffffff;
+}
+
+.btn-card-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--primary-600);
+}
+
+[data-theme="dark"] .btn-card-open {
+  color: #34d399;
 }
 
 /* Print Layout */

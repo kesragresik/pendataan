@@ -14,11 +14,14 @@ const STORAGE_KEY_TIME = "tempat_ibadah_cached_time";
 // State Global
 const state = {
   selectedKecamatan: null,       // null = Halaman Landing Pemilihan Kecamatan; string = Halaman Dashboard Kecamatan
+  currentDataset: "kesra",       // "kesra" = Hasil Survei Pendataan Kesra; "kemenag" = Master Data Resmi Kemenag
   landingSearchQuery: "",        // Pencarian nama kecamatan di halaman landing
   rawHeaders: [],                // Header mentah CSV
   rawRows: [],                   // Seluruh baris data se-Kabupaten Gresik
   kecamatanSummaryList: [],      // Rangkuman 18 kecamatan beserta total & breakdown jenis
   kecamatanAllRows: [],          // SELURUH data tempat ibadah pada kecamatan yang sedang dipilih (100% 1 kecamatan)
+  kemenagAllRows: [],            // SELURUH data tempat ibadah Kemenag khusus kecamatan yang dipilih
+  kemenagFilteredRows: [],       // Data tempat ibadah Kemenag hasil filter/search di layar
   filteredRows: [],              // Data tempat ibadah hasil filter di layar (search/kategori/status)
   currentPage: 1,
   rowsPerPage: 25,
@@ -265,6 +268,29 @@ function initEventListeners() {
   const exportPdfBtn = document.getElementById("exportPdfBtn");
   if (exportPdfBtn) {
     exportPdfBtn.addEventListener("click", exportToPDF);
+  }
+
+  // 9. Dataset Switcher Tabs (Kesra vs Kemenag)
+  const tabKesraBtn = document.getElementById("tabKesraBtn");
+  if (tabKesraBtn) {
+    tabKesraBtn.addEventListener("click", () => {
+      switchDataset("kesra");
+    });
+  }
+
+  const tabKemenagBtn = document.getElementById("tabKemenagBtn");
+  if (tabKemenagBtn) {
+    tabKemenagBtn.addEventListener("click", () => {
+      switchDataset("kemenag");
+    });
+  }
+
+  // 10. Tombol Unduh Kemenag (Excel .xlsx)
+  const dlKemenagBtn = document.getElementById("downloadKemenagBtn");
+  if (dlKemenagBtn) {
+    dlKemenagBtn.addEventListener("click", () => {
+      exportKemenagExcel(state.selectedKecamatan);
+    });
   }
 }
 
@@ -580,7 +606,7 @@ function renderLandingKecamatan() {
             <h3 class="kecamatan-card-title">${escapeHTML(item.name)}</h3>
             <span class="kecamatan-card-subtitle">Kabupaten Gresik</span>
           </div>
-          <div class="kecamatan-card-count-text">
+          <div class="kecamatan-card-count-text" title="Total Tempat Ibadah Terdata">
             <span class="count-text-number">${item.total.toLocaleString("id-ID")}</span>
             <span class="count-text-label">Data</span>
           </div>
@@ -631,11 +657,15 @@ function renderLandingKecamatan() {
 function selectKecamatan(kecamatanName) {
   state.selectedKecamatan = kecamatanName;
 
-  // 1. Filter SELURUH baris data khusus kecamatan ini (100% 1 KECAMATAN UTUH)
+  // 1. Filter SELURUH baris data survei Kesra khusus kecamatan ini (100% 1 KECAMATAN UTUH)
   state.kecamatanAllRows = state.rawRows.filter(row => {
     const val = (row[state.kecamatanColIdx] || "").trim().toUpperCase();
     return val === kecamatanName.toUpperCase();
   });
+
+  // 2. Muat seluruh data resmi Kemenag untuk kecamatan ini
+  state.kemenagAllRows = (window.KEMENAG_BY_KECAMATAN && window.KEMENAG_BY_KECAMATAN[kecamatanName.toUpperCase()]) || [];
+  state.kemenagFilteredRows = [...state.kemenagAllRows];
 
   // Otomatis urutkan default seluruh data kecamatan berdasarkan timestamp descending
   if (state.timestampColIdx !== -1) {
@@ -652,7 +682,7 @@ function selectKecamatan(kecamatanName) {
     });
   }
 
-  // 2. Reset kontrol & filter di dashboard tabel
+  // 3. Reset kontrol & filter di dashboard tabel
   state.currentPage = 1;
   state.searchQuery = "";
   state.filterJenisVal = "ALL";
@@ -666,7 +696,7 @@ function selectKecamatan(kecamatanName) {
   const statusFilter = document.getElementById("statusFilterSelect");
   if (statusFilter) statusFilter.value = "ALL";
 
-  // 3. Update info banner aktif kecamatan
+  // 4. Update info banner aktif kecamatan & badge Kemenag
   const activeBadgeName = document.getElementById("activeKecName");
   const activeDescText = document.getElementById("activeKecNameText");
   const statsKecName = document.getElementById("statsKecName");
@@ -677,17 +707,47 @@ function selectKecamatan(kecamatanName) {
   if (statsKecName) statsKecName.textContent = kecamatanName;
   if (exportKecBadge) exportKecBadge.textContent = `Kec. ${kecamatanName}`;
 
-  // 4. Update dropdown kategori hanya untuk jenis yang ada di kecamatan terpilih
+  // Update metrik Kemenag di dashboard
+  const kemenagCount = state.kemenagAllRows.length;
+  const metricKemenag = document.getElementById("metricKemenagTotal");
+  if (metricKemenag) metricKemenag.textContent = kemenagCount.toLocaleString("id-ID");
+
+  const kemenagDownloadBadge = document.getElementById("kemenagDownloadBadge");
+  if (kemenagDownloadBadge) kemenagDownloadBadge.textContent = `${kemenagCount.toLocaleString("id-ID")} Data`;
+
+  const dashboardKemenagPillText = document.getElementById("dashboardKemenagPillText");
+  if (dashboardKemenagPillText) dashboardKemenagPillText.textContent = `${kemenagCount.toLocaleString("id-ID")} Data Kemenag`;
+
+  const tabKemenagBadge = document.getElementById("tabKemenagBadge");
+  if (tabKemenagBadge) tabKemenagBadge.textContent = kemenagCount.toLocaleString("id-ID");
+
+  const tabKesraBadge = document.getElementById("tabKesraBadge");
+  if (tabKesraBadge) tabKesraBadge.textContent = state.kecamatanAllRows.length.toLocaleString("id-ID");
+
+  const datasetHintText = document.getElementById("datasetHintText");
+  if (datasetHintText) {
+    datasetHintText.innerHTML = `Menampilkan data formulir survei pendataan mandiri tempat ibadah di Kecamatan <strong>${escapeHTML(kecamatanName)}</strong>`;
+  }
+
+  // 5. Default aktif pada dataset Kesra
+  state.currentDataset = "kesra";
+  const tabKesra = document.getElementById("tabKesraBtn");
+  const tabKemenag = document.getElementById("tabKemenagBtn");
+  if (tabKesra) tabKesra.classList.add("active");
+  if (tabKemenag) tabKemenag.classList.remove("active");
+  if (statusFilter) statusFilter.style.display = "inline-block";
+
+  // 6. Update dropdown kategori hanya untuk jenis yang ada di kecamatan terpilih
   populateCategoryDropdownForSelectedKecamatan();
 
-  // 5. Tampilkan Dashboard View & Sembunyikan Landing View
+  // 7. Tampilkan Dashboard View & Sembunyikan Landing View
   const landingView = document.getElementById("landingView");
   const dashboardView = document.getElementById("dashboardView");
 
   if (landingView) landingView.style.display = "none";
   if (dashboardView) dashboardView.style.display = "flex";
 
-  // 6. Jalankan filter awal dan render tabel
+  // 8. Jalankan filter awal dan render tabel
   applyFilters();
 
   // Scroll ke atas halaman dengan halus
@@ -712,7 +772,7 @@ function showLandingPage() {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// Isi Dropdown Jenis Tempat Ibadah Khusus untuk Kecamatan Terpilih
+// Isi Dropdown Jenis Tempat Ibadah Khusus untuk Kecamatan Terpilih (Kesra)
 function populateCategoryDropdownForSelectedKecamatan() {
   const jenisSelect = document.getElementById("categoryFilterSelect");
   if (!jenisSelect) return;
@@ -739,6 +799,61 @@ function populateCategoryDropdownForSelectedKecamatan() {
       }
     });
   }
+}
+
+// Isi Dropdown Jenis Tempat Ibadah Khusus untuk Kecamatan Terpilih (Kemenag)
+function populateCategoryDropdownForKemenag() {
+  const jenisSelect = document.getElementById("categoryFilterSelect");
+  if (!jenisSelect) return;
+
+  const typeCounts = {};
+  state.kemenagAllRows.forEach(item => {
+    const j = item.jenis || "Lainnya";
+    typeCounts[j] = (typeCounts[j] || 0) + 1;
+  });
+
+  let optionsHtml = `<option value="ALL">Semua Jenis Kemenag (${state.kemenagAllRows.length})</option>`;
+  Object.keys(typeCounts).sort().forEach(type => {
+    optionsHtml += `<option value="${escapeHTML(type)}" ${state.filterJenisVal === type ? 'selected' : ''}>${escapeHTML(type)} (${typeCounts[type]})</option>`;
+  });
+
+  jenisSelect.innerHTML = optionsHtml;
+}
+
+// Berpindah Antara Tab "Data Pendataan Kesra" dan "Data Resmi Kemenag"
+function switchDataset(datasetName) {
+  state.currentDataset = datasetName;
+  state.currentPage = 1;
+  state.searchQuery = "";
+  state.filterJenisVal = "ALL";
+  state.filterStatusVal = "ALL";
+  state.sortColIndex = -1;
+
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) searchInput.value = "";
+  const clearBtn = document.getElementById("searchClearBtn");
+  if (clearBtn) clearBtn.style.display = "none";
+
+  const tabKesra = document.getElementById("tabKesraBtn");
+  const tabKemenag = document.getElementById("tabKemenagBtn");
+  const statusFilter = document.getElementById("statusFilterSelect");
+  const hintText = document.getElementById("datasetHintText");
+
+  if (datasetName === "kemenag") {
+    if (tabKesra) tabKesra.classList.remove("active");
+    if (tabKemenag) tabKemenag.classList.add("active");
+    if (statusFilter) statusFilter.style.display = "none"; // Status kelengkapan hanya ada di formulir
+    if (hintText) hintText.innerHTML = `Menampilkan data referensi resmi Kementerian Agama untuk Kecamatan <strong>${escapeHTML(state.selectedKecamatan || "")}</strong> (${state.kemenagAllRows.length} Data)`;
+    populateCategoryDropdownForKemenag();
+  } else {
+    if (tabKesra) tabKesra.classList.add("active");
+    if (tabKemenag) tabKemenag.classList.remove("active");
+    if (statusFilter) statusFilter.style.display = "inline-block";
+    if (hintText) hintText.innerHTML = `Menampilkan data formulir survei pendataan mandiri tempat ibadah di Kecamatan <strong>${escapeHTML(state.selectedKecamatan || "")}</strong> (${state.kecamatanAllRows.length} Data)`;
+    populateCategoryDropdownForSelectedKecamatan();
+  }
+
+  applyFilters();
 }
 
 /**
@@ -773,7 +888,68 @@ function parseTimestampValue(val) {
 // FILTERING & PENGURUTAN DI DALAM KECAMATAN TERPILIH
 // ==========================================================================
 function applyFilters() {
-  if (!state.selectedKecamatan || state.kecamatanAllRows.length === 0) {
+  if (!state.selectedKecamatan) {
+    state.filteredRows = [];
+    state.kemenagFilteredRows = [];
+    renderTable();
+    updateBannerMetrics();
+    return;
+  }
+
+  // ==========================================
+  // 1. FILTERING DATASET KEMENAG
+  // ==========================================
+  if (state.currentDataset === "kemenag") {
+    let result = [...state.kemenagAllRows];
+
+    // Filter Jenis Kemenag
+    if (state.filterJenisVal !== "ALL") {
+      result = result.filter(item => {
+        return (item.jenis || "").toLowerCase() === state.filterJenisVal.toLowerCase();
+      });
+    }
+
+    // Pencarian Bebas di Kemenag
+    if (state.searchQuery) {
+      const q = state.searchQuery.toLowerCase();
+      result = result.filter(item => {
+        return (
+          (item.nama && item.nama.toLowerCase().includes(q)) ||
+          (item.alamat && item.alamat.toLowerCase().includes(q)) ||
+          (item.jenis && item.jenis.toLowerCase().includes(q)) ||
+          (item.id && item.id.toString().includes(q))
+        );
+      });
+    }
+
+    // Pengurutan Kemenag
+    if (state.sortColIndex !== -1) {
+      const isAsc = state.sortAsc;
+      const keyMap = ["id", "jenis", "nama", "alamat", "kecamatan"];
+      const key = keyMap[state.sortColIndex] || "id";
+
+      result.sort((a, b) => {
+        const valA = (a[key] || "").toString().trim();
+        const valB = (b[key] || "").toString().trim();
+        if (key === "id") {
+          return isAsc ? (a.id - b.id) : (b.id - a.id);
+        }
+        return isAsc
+          ? valA.localeCompare(valB, undefined, { numeric: true })
+          : valB.localeCompare(valA, undefined, { numeric: true });
+      });
+    }
+
+    state.kemenagFilteredRows = result;
+    updateBannerMetrics();
+    renderKemenagTable();
+    return;
+  }
+
+  // ==========================================
+  // 2. FILTERING DATASET KESRA
+  // ==========================================
+  if (state.kecamatanAllRows.length === 0) {
     state.filteredRows = [];
     renderTable();
     updateBannerMetrics();
@@ -849,6 +1025,119 @@ function applyFilters() {
   state.filteredRows = result;
   updateBannerMetrics();
   renderTable();
+}
+
+// Render Tabel Dataset Kemenag
+function renderKemenagTable() {
+  const tableHead = document.getElementById("tableHead");
+  const tableBody = document.getElementById("tableBody");
+  const emptyState = document.getElementById("emptyState");
+  const tableContainer = document.getElementById("tableContainer");
+
+  if (!tableHead || !tableBody) return;
+
+  tableHead.innerHTML = "";
+  tableBody.innerHTML = "";
+
+  const totalRows = state.kemenagFilteredRows.length;
+
+  if (totalRows === 0) {
+    if (tableContainer) tableContainer.style.display = "none";
+    if (emptyState) emptyState.style.display = "flex";
+    const title = document.getElementById("emptyStateTitle");
+    const desc = document.getElementById("emptyStateDesc");
+    if (title) title.textContent = "Data Kemenag Tidak Ditemukan";
+    if (desc) desc.textContent = `Tidak ada tempat ibadah Kemenag di Kecamatan ${state.selectedKecamatan || ""} yang cocok dengan kata kunci atau filter Anda.`;
+    renderPagination(0);
+    return;
+  }
+
+  if (emptyState) emptyState.style.display = "none";
+  if (tableContainer) tableContainer.style.display = "block";
+
+  // Header Kemenag
+  const trHead = document.createElement("tr");
+
+  const kemenagHeaders = [
+    { label: "#", key: "id", sortIdx: 0, className: "row-index" },
+    { label: "Jenis", key: "jenis", sortIdx: 1, className: "col-jenis" },
+    { label: "Nama Tempat Ibadah", key: "nama", sortIdx: 2 },
+    { label: "Alamat / Dusun / Desa", key: "alamat", sortIdx: 3 },
+    { label: "Kecamatan", key: "kecamatan", sortIdx: 4 }
+  ];
+
+  kemenagHeaders.forEach((col) => {
+    const th = document.createElement("th");
+    if (col.className) th.className = col.className;
+    th.classList.add("sortable");
+
+    const isCurrentSort = state.sortColIndex === col.sortIdx;
+    let arrowIcon = "↕";
+    if (isCurrentSort) {
+      arrowIcon = state.sortAsc ? "▲" : "▼";
+    }
+
+    th.innerHTML = `
+      <div class="th-content">
+        <span>${escapeHTML(col.label)}</span>
+        <span class="sort-icon ${isCurrentSort ? 'active' : ''}">${arrowIcon}</span>
+      </div>
+    `;
+
+    th.addEventListener("click", () => {
+      if (state.sortColIndex === col.sortIdx) {
+        state.sortAsc = !state.sortAsc;
+      } else {
+        state.sortColIndex = col.sortIdx;
+        state.sortAsc = true;
+      }
+      applyFilters();
+    });
+
+    trHead.appendChild(th);
+  });
+
+  tableHead.appendChild(trHead);
+
+  // Body Kemenag
+  const startIdx = (state.currentPage - 1) * state.rowsPerPage;
+  const endIdx = Math.min(startIdx + state.rowsPerPage, totalRows);
+  const pageRows = state.kemenagFilteredRows.slice(startIdx, endIdx);
+
+  pageRows.forEach((item, rowIdx) => {
+    const tr = document.createElement("tr");
+
+    // # No
+    const tdNo = document.createElement("td");
+    tdNo.className = "row-index";
+    tdNo.textContent = startIdx + rowIdx + 1;
+    tr.appendChild(tdNo);
+
+    // Jenis
+    const tdJenis = document.createElement("td");
+    tdJenis.className = "col-jenis";
+    tdJenis.innerHTML = formatCellValue(item.jenis, "JENIS");
+    tr.appendChild(tdJenis);
+
+    // Nama
+    const tdNama = document.createElement("td");
+    tdNama.innerHTML = `<strong>${escapeHTML(item.nama || "-")}</strong>`;
+    tr.appendChild(tdNama);
+
+    // Alamat
+    const tdAlamat = document.createElement("td");
+    tdAlamat.textContent = item.alamat || "-";
+    tr.appendChild(tdAlamat);
+
+    // Kecamatan
+    const tdKec = document.createElement("td");
+    tdKec.innerHTML = `<span class="table-badge badge-lembaga">KEC. ${escapeHTML(item.kecamatan || state.selectedKecamatan)}</span>`;
+    tr.appendChild(tdKec);
+
+    tableBody.appendChild(tr);
+  });
+
+  renderPagination(totalRows, startIdx + 1, endIdx);
 }
 
 // Render Header & Body Tabel
@@ -1047,7 +1336,8 @@ function renderPagination(totalRows, from = 0, to = 0) {
     return;
   }
 
-  infoEl.textContent = `Menampilkan ${from} - ${to} dari total ${totalRows.toLocaleString("id-ID")} tempat ibadah di Kec. ${state.selectedKecamatan || ""}`;
+  const datasetLabel = state.currentDataset === "kemenag" ? "tempat ibadah resmi Kemenag" : "tempat ibadah survei Kesra";
+  infoEl.textContent = `Menampilkan ${from} - ${to} dari total ${totalRows.toLocaleString("id-ID")} ${datasetLabel} di Kec. ${state.selectedKecamatan || ""}`;
 
   const totalPages = Math.ceil(totalRows / state.rowsPerPage);
   if (totalPages <= 1) {
@@ -1114,13 +1404,21 @@ function updateBannerMetrics() {
   const metricTotal = document.getElementById("metricTotal");
   const metricFiltered = document.getElementById("metricFiltered");
   const metricLastSync = document.getElementById("metricLastSync");
+  const metricKemenag = document.getElementById("metricKemenagTotal");
 
   if (metricTotal) {
     metricTotal.textContent = state.kecamatanAllRows.length.toLocaleString("id-ID");
   }
 
+  if (metricKemenag) {
+    metricKemenag.textContent = state.kemenagAllRows.length.toLocaleString("id-ID");
+  }
+
   if (metricFiltered) {
-    metricFiltered.textContent = state.filteredRows.length.toLocaleString("id-ID");
+    const currentFiltered = state.currentDataset === "kemenag"
+      ? state.kemenagFilteredRows.length
+      : state.filteredRows.length;
+    metricFiltered.textContent = currentFiltered.toLocaleString("id-ID");
   }
 
   if (metricLastSync && state.lastUpdated) {
@@ -1170,28 +1468,43 @@ function renderErrorState(errorMessage) {
 // (Mengabaikan filter pencarian di layar tabel)
 // ==========================================================================
 function exportToExcel() {
-  if (!state.selectedKecamatan || !state.kecamatanAllRows || state.kecamatanAllRows.length === 0) {
+  if (!state.selectedKecamatan) {
     showToast("Silakan pilih kecamatan terlebih dahulu untuk mengekspor data!", "error");
+    return;
+  }
+
+  // Jika sedang aktif di tab Kemenag, arahkan ke ekspor Kemenag
+  if (state.currentDataset === "kemenag") {
+    exportKemenagExcel(state.selectedKecamatan);
+    return;
+  }
+
+  if (!state.kecamatanAllRows || state.kecamatanAllRows.length === 0) {
+    showToast("Tidak ada data survei Kesra untuk kecamatan ini!", "warning");
     return;
   }
 
   // ATURAN MANDATORY: Ekspor SELALU mengambil seluruh data 1 kecamatan tersebut!
   const dataToExport = state.kecamatanAllRows;
 
-  showToast(`Menyiapkan Excel seluruh data Kecamatan ${state.selectedKecamatan}...`, "info");
+  showToast(`Menyiapkan Excel seluruh data Kesra Kecamatan ${state.selectedKecamatan}...`, "info");
 
   try {
     if (typeof XLSX === "undefined") {
       throw new Error("Pustaka ekspor Excel (.xlsx) belum termuat. Anda dapat menggunakan tombol CSV sebagai alternatif.");
     }
 
+    const kecName = state.selectedKecamatan.toUpperCase();
+    const titleRow1 = [`DATA PENDATAAN TEMPAT IBADAH & LEMBAGA KEAGAMAAN KABUPATEN GRESIK`];
+    const titleRow2 = [`WILAYAH KECAMATAN ${kecName} - BAGIAN KESRA KAB. GRESIK`];
+    const emptyRow = [];
     const exportHeaders = ["No", ...state.rawHeaders.map(formatColumnHeader)];
     const exportRows = dataToExport.map((row, idx) => [idx + 1, ...row]);
-    const exportData = [exportHeaders, ...exportRows];
+    const exportData = [titleRow1, titleRow2, emptyRow, exportHeaders, ...exportRows];
 
     const ws = XLSX.utils.aoa_to_sheet(exportData);
 
-    // Otomatis atur lebar kolom agar rapi dan tidak terpotong
+    // Otomatis atur lebar kolom agar rapi dan tidak terpotong (dihitung dari kolom header tabel dan isinya)
     const colWidths = exportHeaders.map((header, colIdx) => {
       let maxLen = header.length;
       exportRows.forEach(r => {
@@ -1207,17 +1520,166 @@ function exportToExcel() {
     const tabName = state.selectedKecamatan.slice(0, 31);
     XLSX.utils.book_append_sheet(wb, ws, tabName);
 
-    const kecName = state.selectedKecamatan.toUpperCase();
     const dateFormatted = formatIndoDateFileName();
-    const fileName = `Data_Pendataan_Tempat_Ibadah_${kecName}_${dateFormatted}.xlsx`;
+    const fileName = `Data_Pendataan_Tempat_Ibadah_Kesra_${kecName}_${dateFormatted}.xlsx`;
 
     XLSX.writeFile(wb, fileName);
-    showToast(`Sukses mengekspor ${dataToExport.length.toLocaleString("id-ID")} data Kecamatan ${state.selectedKecamatan} ke Excel!`, "success");
+    showToast(`Sukses mengekspor ${dataToExport.length.toLocaleString("id-ID")} data Kesra Kecamatan ${state.selectedKecamatan} ke Excel!`, "success");
   } catch (err) {
     console.error("Gagal export excel:", err);
     showToast("Gagal ekspor ke Excel: " + err.message, "error");
   }
 }
+
+// ==========================================================================
+// EXPORT DATA RESMI KEMENAG PER KECAMATAN (.XLSX)
+// ==========================================================================
+function exportKemenagExcel(kecamatanName) {
+  const kec = (kecamatanName || state.selectedKecamatan || "").trim().toUpperCase();
+  if (!kec) {
+    showToast("Silakan pilih kecamatan terlebih dahulu!", "error");
+    return;
+  }
+
+  const records = (window.KEMENAG_BY_KECAMATAN && window.KEMENAG_BY_KECAMATAN[kec]) || [];
+  if (records.length === 0) {
+    showToast(`Tidak ada data Kemenag ditemukan untuk Kecamatan ${kec}`, "warning");
+    return;
+  }
+
+  showToast(`Menyiapkan Excel Data Kemenag Kecamatan ${kec} (${records.length} tempat ibadah)...`, "info");
+
+  try {
+    if (typeof XLSX === "undefined") {
+      throw new Error("Pustaka ekspor Excel (.xlsx) belum termuat.");
+    }
+
+    // Susun 2 baris judul resmi di atas tabel
+    const titleRow1 = [`DATA TEMPAT IBADAH KEMENTERIAN AGAMA (KEMENAG) REPUBLIK INDONESIA`];
+    const titleRow2 = [`WILAYAH KECAMATAN ${kec} - KABUPATEN GRESIK`];
+    const emptyRow = [];
+    const headerRow = [
+      "No",
+      "Jenis Tempat Ibadah",
+      "Nama Tempat Ibadah",
+      "Alamat / Dusun / Desa",
+      "Kecamatan",
+      "Kabupaten",
+      "Sumber Data"
+    ];
+
+    const dataRows = records.map((item, idx) => [
+      idx + 1,
+      item.jenis || "",
+      cleanLeadingSpaces(item.nama || ""),
+      cleanLeadingSpaces(item.alamat || ""),
+      kec,
+      "Gresik",
+      "Kemenag RI"
+    ]);
+
+    const aoa = [
+      titleRow1,
+      titleRow2,
+      emptyRow,
+      headerRow,
+      ...dataRows
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+    // Styling lebar kolom agar sangat rapi di Microsoft Excel
+    ws['!cols'] = [
+      { wch: 6 },   // No
+      { wch: 20 },  // Jenis
+      { wch: 38 },  // Nama
+      { wch: 45 },  // Alamat
+      { wch: 18 },  // Kecamatan
+      { wch: 14 },  // Kabupaten
+      { wch: 16 }   // Sumber Data
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const tabName = `Kec ${kec}`.slice(0, 31);
+    XLSX.utils.book_append_sheet(wb, ws, tabName);
+
+    const dateFormatted = formatIndoDateFileName();
+    const fileName = `Data_Kemenag_Tempat_Ibadah_Kecamatan_${kec}_${dateFormatted}.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+    showToast(`Sukses mengunduh ${records.length.toLocaleString("id-ID")} Data Kemenag Kecamatan ${kec}!`, "success");
+  } catch (err) {
+    console.error("Gagal mengunduh Excel Kemenag:", err);
+    showToast("Gagal mengunduh Excel: " + err.message, "error");
+  }
+}
+
+// ==========================================================================
+// EXPORT DATA RESMI KEMENAG PER KECAMATAN (.CSV)
+// ==========================================================================
+function exportKemenagCSV(kecamatanName) {
+  const kec = (kecamatanName || state.selectedKecamatan || "").trim().toUpperCase();
+  if (!kec) {
+    showToast("Silakan pilih kecamatan terlebih dahulu!", "error");
+    return;
+  }
+
+  const records = (window.KEMENAG_BY_KECAMATAN && window.KEMENAG_BY_KECAMATAN[kec]) || [];
+  if (records.length === 0) {
+    showToast(`Tidak ada data Kemenag ditemukan untuk Kecamatan ${kec}`, "warning");
+    return;
+  }
+
+  try {
+    const headers = ["No", "Jenis Tempat Ibadah", "Nama Tempat Ibadah", "Alamat", "Kecamatan", "Kabupaten", "Sumber Data"];
+    const csvRows = [headers.join(",")];
+
+    records.forEach((item, idx) => {
+      const escape = (val) => `"${(val || "").toString().replace(/"/g, '""').trim()}"`;
+      const row = [
+        idx + 1,
+        escape(item.jenis),
+        escape(cleanLeadingSpaces(item.nama)),
+        escape(cleanLeadingSpaces(item.alamat)),
+        escape(kec),
+        escape("Gresik"),
+        escape("Kemenag RI")
+      ];
+      csvRows.push(row.join(","));
+    });
+
+    const csvContent = "\uFEFF" + csvRows.join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const dateFormatted = formatIndoDateFileName();
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Data_Kemenag_Tempat_Ibadah_Kecamatan_${kec}_${dateFormatted}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast(`Sukses mengunduh CSV Data Kemenag Kecamatan ${kec}!`, "success");
+  } catch (err) {
+    console.error("Gagal mengunduh CSV Kemenag:", err);
+    showToast("Gagal mengunduh CSV: " + err.message, "error");
+  }
+}
+
+// Format Tanggal Indonesia untuk Tampilan & Metadata
+function formatIndoDate(date = new Date()) {
+  const months = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+  const d = date instanceof Date ? date : new Date(date);
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// Ekspos fungsi unduh ke global window agar dapat dipanggil dari mana saja
+window.exportKemenagExcel = exportKemenagExcel;
+window.exportKemenagCSV = exportKemenagCSV;
+window.switchDataset = switchDataset;
 
 // Format Tanggal Indonesia untuk Penamaan Berkas (Contoh: 10-Oktober-2026 atau 29-Desember-2020)
 function formatIndoDateFileName(date = new Date()) {
@@ -1262,18 +1724,19 @@ function exportToPDF() {
     const dateFormatted = formatIndoDateFileName();
     const fileName = `Data_Pendataan_Tempat_Ibadah_${kecName}_${dateFormatted}.pdf`;
 
-    // Judul Dokumen & Metadata Resmi Kop Dokumen
+    // Judul Dokumen & Metadata Resmi Kop Dokumen (2 Row di atas tabel)
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(30, 41, 59);
-    doc.text(`DATA PENDATAAN TEMPAT IBADAH & LEMBAGA KEAGAMAAN`, 14, 13);
+    doc.text(`DATA PENDATAAN TEMPAT IBADAH & LEMBAGA KEAGAMAAN KABUPATEN GRESIK`, 14, 13);
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(71, 85, 105);
-    doc.text(`Wilayah: Kecamatan ${kecName} | Bagian Kesejahteraan Sosial Sekretariat Daerah Kabupaten Gresik`, 14, 19);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(5, 150, 105);
+    doc.text(`WILAYAH KECAMATAN ${kecName} - BAGIAN KESRA KAB. GRESIK`, 14, 19);
 
     const infoText = `Total Data: ${dataToExport.length} Tempat Ibadah | Tanggal Unduh: ${dateFormatted}`;
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(100, 116, 139);
     doc.text(infoText, 14, 24);

@@ -159,17 +159,26 @@
             </svg>
             <span id="activeKecName">KECAMATAN</span>
           </span>
+
+          <span class="kemenag-status-pill" id="dashboardKemenagPill" title="Data Resmi Tempat Ibadah Kementerian Agama">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+              <path d="M2 17l10 5 10-5"></path>
+              <path d="M2 12l10 5 10-5"></path>
+            </svg>
+            <span id="dashboardKemenagPillText">0 Data Kemenag</span>
+          </span>
         </div>
 
         <div class="active-kec-actions">
           <div class="export-hint-pill"
-            title="Aturan Sistem: Ekspor Excel selalu mengunduh 1 kecamatan utuh, bukan hasil filter">
+            title="Aturan Sistem: Ekspor unduhan selalu mengambil data 1 kecamatan terpilih secara penuh">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="16" x2="12" y2="12"></line>
               <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
-            <span>Ekspor Excel mengunduh data penuh</span>
+            <span>Unduhan per 1 Kecamatan Penuh</span>
           </div>
 
           <!-- Tombol Ganti Kecamatan untuk Kembali ke List Landing -->
@@ -195,8 +204,22 @@
             </svg>
           </div>
           <div class="stat-content">
-            <span class="stat-label">Total Tempat Ibadah (<span id="statsKecName">Kecamatan</span>)</span>
+            <span class="stat-label">Terdata di Kesra (<span id="statsKecName">Kecamatan</span>)</span>
             <span class="stat-value" id="metricTotal">0</span>
+          </div>
+        </div>
+
+        <div class="stat-card" id="cardStatKemenag">
+          <div class="stat-icon kemenag">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+              <path d="M2 17l10 5 10-5"></path>
+              <path d="M2 12l10 5 10-5"></path>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Data Resmi Kemenag</span>
+            <span class="stat-value text-kemenag" id="metricKemenagTotal">0</span>
           </div>
         </div>
 
@@ -207,7 +230,7 @@
             </svg>
           </div>
           <div class="stat-content">
-            <span class="stat-label">Data Sesuai Filter di Layar</span>
+            <span class="stat-label">Sesuai Filter di Layar</span>
             <span class="stat-value" id="metricFiltered">0</span>
           </div>
         </div>
@@ -220,11 +243,39 @@
             </svg>
           </div>
           <div class="stat-content">
-            <span class="stat-label">Pembaruan Terakhir</span>
+            <span class="stat-label">Pembaruan Sinkron</span>
             <span class="stat-value" id="metricLastSync">-</span>
           </div>
         </div>
       </section>
+
+      <!-- Tab Switcher: Pilih Dataset yang Ingin Ditampilkan & Diunduh -->
+      <div class="dataset-switcher-card">
+        <div class="dataset-tabs">
+          <button type="button" class="dataset-tab-btn active" id="tabKesraBtn" title="Lihat hasil pengisian data formulir kesra">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <span>Data Pendataan Kesra</span>
+            <span class="tab-count-badge" id="tabKesraBadge">0</span>
+          </button>
+          <button type="button" class="dataset-tab-btn" id="tabKemenagBtn" title="Lihat data referensi resmi dari Kementerian Agama">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+              <path d="M2 17l10 5 10-5"></path>
+              <path d="M2 12l10 5 10-5"></path>
+            </svg>
+            <span>Data Resmi Kemenag</span>
+            <span class="tab-count-badge badge-kemenag" id="tabKemenagBadge">0</span>
+          </button>
+        </div>
+        <div class="dataset-info-hint" id="datasetInfoHint">
+          <span id="datasetHintText">Menampilkan data formulir survei pendataan mandiri tempat ibadah di wilayah ini</span>
+        </div>
+      </div>
 
       <!-- Toolbar Kontrol, Filter & Ekspor (Khusus Kecamatan Terpilih) -->
       <section class="table-controls-card">
@@ -235,7 +286,7 @@
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="searchInput" class="search-input" placeholder="Cari data..." autocomplete="off"
+            <input type="text" id="searchInput" class="search-input" placeholder="Cari nama, jenis, alamat..." autocomplete="off"
               autocorrect="off" autocapitalize="none" spellcheck="false">
             <button type="button" class="search-clear" id="searchClearBtn" title="Bersihkan pencarian">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -250,7 +301,7 @@
             <option value="ALL">Semua Jenis</option>
           </select>
 
-          <!-- Filter Dropdown Status Kelengkapan -->
+          <!-- Filter Dropdown Status Kelengkapan (Hanya aktif di tab Kesra) -->
           <select id="statusFilterSelect" class="filter-select" title="Filter Status Kelengkapan">
             <option value="ALL">Status Kelengkapan</option>
             <option value="sudah lengkap">Sudah Lengkap</option>
@@ -268,20 +319,31 @@
         </div>
 
         <div class="controls-right">
-          <!-- Tombol Export Excel: PASTI 1 KECAMATAN PENUH -->
-          <button class="btn btn-success" id="exportExcelBtn"
-            title="Unduh seluruh data tempat ibadah kecamatan ini dalam format Excel (.xlsx)">
+          <!-- Tombol Download Data Kemenag Resmi Kecamatan Ini (Excel .xlsx) -->
+          <button class="btn btn-kemenag" id="downloadKemenagBtn"
+            title="Unduh seluruh data tempat ibadah resmi Kemenag kecamatan ini dalam format Excel (.xlsx)">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path
                 d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-4h2v4zm0-6h-2V7h2v4zm4 6h-2v-2h2v2zm0-4h-2V7h2v6zm-8 4H8v-2h2v2zm0-4H8V7h2v6z" />
             </svg>
-            <span>Ekspor Excel</span>
+            <span>Unduh Kemenag</span>
+            <span class="badge-kemenag-scope" id="kemenagDownloadBadge">0 Data</span>
+          </button>
+
+          <!-- Tombol Export Excel Kesra: PASTI 1 KECAMATAN PENUH -->
+          <button class="btn btn-success" id="exportExcelBtn"
+            title="Unduh seluruh data tempat ibadah hasil survei kesra kecamatan ini dalam format Excel (.xlsx)">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-4h2v4zm0-6h-2V7h2v4zm4 6h-2v-2h2v2zm0-4h-2V7h2v6zm-8 4H8v-2h2v2zm0-4H8V7h2v6z" />
+            </svg>
+            <span>Ekspor Kesra</span>
             <span class="badge-kec-scope" id="exportKecBadge">1 Kec</span>
           </button>
 
-          <!-- Tombol Export PDF: PASTI 1 KECAMATAN PENUH -->
+          <!-- Tombol Export PDF Kesra: PASTI 1 KECAMATAN PENUH -->
           <button class="btn btn-secondary" id="exportPdfBtn"
-            title="Unduh seluruh data tempat ibadah kecamatan ini dalam format PDF (.pdf)">
+            title="Unduh data formulir survei kecamatan ini dalam format PDF (.pdf)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
@@ -289,7 +351,7 @@
               <line x1="16" y1="17" x2="8" y2="17"></line>
               <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
-            <span>Ekspor PDF</span>
+            <span>PDF</span>
           </button>
         </div>
       </section>
@@ -356,6 +418,9 @@
 
   <!-- Real Data Snapshot (Memastikan data langsung muncul tanpa delay & tanpa CORS) -->
   <script src="js/data.js"></script>
+
+  <!-- Data Referensi Resmi Kemenag Kabupaten Gresik (18 Kecamatan, 4.250 Tempat Ibadah) -->
+  <script src="js/data-kemenag.js"></script>
 
   <!-- Client Application Script -->
   <script src="js/app.js"></script>
