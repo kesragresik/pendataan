@@ -286,19 +286,6 @@ body {
   transform: translateY(-1px);
 }
 
-.btn-pdf {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  box-shadow: var(--shadow-xs);
-}
-
-.btn-pdf:hover {
-  background-color: var(--bg-subtle);
-  border-color: var(--text-muted);
-  transform: translateY(-1px);
-}
-
 .btn-icon-only {
   padding: 0.5rem;
   border-radius: var(--radius-md);
@@ -422,9 +409,9 @@ body {
 
 .search-box {
   position: relative;
-  width: 175px;
-  min-width: 160px;
-  max-width: 185px;
+  width: 215px;
+  min-width: 200px;
+  max-width: 225px;
   flex: 0 0 auto;
 }
 
@@ -504,6 +491,10 @@ body {
 .filter-select:focus {
   border-color: var(--primary-600);
   box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+
+#categoryFilterSelect {
+  min-width: 215px;
 }
 
 .controls-right {
@@ -646,65 +637,141 @@ td.col-jenis {
   white-space: nowrap;
 }
 
-/* Badges inside cells */
+/* Badges inside cells: Modern Tag / Chip with Indicator Dot (Bukan AI pill lonjong) */
 .table-badge {
-  display: inline-block;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.735rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.01em;
+  border-radius: var(--radius-sm); /* 6px - bentuk chip persegi bersudut halus */
+  letter-spacing: 0.02em;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  line-height: 1.25;
+  transition: var(--transition);
 }
 
+.table-badge .badge-dot {
+  width: 6.5px;
+  height: 6.5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* 1. Islam / Masjid */
 .badge-islam {
-  background-color: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+.badge-islam .badge-dot {
+  background-color: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
 }
 
+/* 2. Mushollah / Langgar */
 .badge-musholla {
-  background-color: #e6fcf5;
-  color: #0c8599;
-  border: 1px solid #99e9f2;
+  background-color: #f0f9ff;
+  color: #075985;
+  border: 1px solid #bae6fd;
+}
+.badge-musholla .badge-dot {
+  background-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
 }
 
+/* 3. Kristen */
 .badge-kristen {
   background-color: #eff6ff;
   color: #1e40af;
   border: 1px solid #bfdbfe;
 }
+.badge-kristen .badge-dot {
+  background-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
 
+/* 4. Katolik */
 .badge-katolik {
   background-color: #eef2ff;
   color: #3730a3;
   border: 1px solid #c7d2fe;
 }
+.badge-katolik .badge-dot {
+  background-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
 
+/* 5. Hindu / Pura */
 .badge-hindu {
   background-color: #fff7ed;
   color: #9a3412;
   border: 1px solid #fed7aa;
 }
+.badge-hindu .badge-dot {
+  background-color: #ea580c;
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.2);
+}
 
+/* 6. Buddha / Vihara */
 .badge-buddha {
   background-color: #fefce8;
   color: #854d0e;
   border: 1px solid #fef08a;
 }
-
-.badge-khonghucu {
-  background-color: #fdf2f8;
-  color: #9d174d;
-  border: 1px solid #fbcfe8;
+.badge-buddha .badge-dot {
+  background-color: #ca8a04;
+  box-shadow: 0 0 0 2px rgba(202, 138, 4, 0.2);
 }
 
+/* 7. Khonghucu / Klenteng */
+.badge-khonghucu {
+  background-color: #fff1f2;
+  color: #9f1239;
+  border: 1px solid #fecdd3;
+}
+.badge-khonghucu .badge-dot {
+  background-color: #e11d48;
+  box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.2);
+}
+
+/* 8. Kepercayaan YME */
+.badge-kepercayaan {
+  background-color: #f8fafc;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+.badge-kepercayaan .badge-dot {
+  background-color: #64748b;
+  box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.2);
+}
+
+/* 9. Rumah Doa */
+.badge-rumahdoa {
+  background-color: #f0fdfa;
+  color: #115e59;
+  border: 1px solid #99f6e4;
+}
+.badge-rumahdoa .badge-dot {
+  background-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+}
+
+/* 10. Lembaga Keagamaan */
 .badge-lembaga {
   background-color: #f5f3ff;
   color: #5b21b6;
   border: 1px solid #ddd6fe;
 }
+.badge-lembaga .badge-dot {
+  background-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
 
+/* Status Kelengkapan */
 .badge-lengkap {
   background-color: #ecfdf5;
   color: #047857;
@@ -719,46 +786,105 @@ td.col-jenis {
   font-weight: 700;
 }
 
+/* Dark Mode Badges */
 [data-theme="dark"] .badge-islam {
   background-color: rgba(16, 185, 129, 0.15);
   color: #34d399;
   border-color: rgba(16, 185, 129, 0.3);
 }
+[data-theme="dark"] .badge-islam .badge-dot {
+  background-color: #34d399;
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.25);
+}
 
 [data-theme="dark"] .badge-musholla {
-  background-color: rgba(12, 133, 153, 0.15);
-  color: #22b8cf;
-  border-color: rgba(12, 133, 153, 0.3);
+  background-color: rgba(2, 132, 199, 0.15);
+  color: #38bdf8;
+  border-color: rgba(2, 132, 199, 0.3);
+}
+[data-theme="dark"] .badge-musholla .badge-dot {
+  background-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
 }
 
 [data-theme="dark"] .badge-kristen {
-  background-color: rgba(59, 130, 246, 0.15);
+  background-color: rgba(37, 99, 235, 0.15);
   color: #60a5fa;
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+[data-theme="dark"] .badge-kristen .badge-dot {
+  background-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25);
 }
 
 [data-theme="dark"] .badge-katolik {
-  background-color: rgba(99, 102, 241, 0.15);
+  background-color: rgba(79, 70, 229, 0.15);
   color: #818cf8;
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: rgba(79, 70, 229, 0.3);
+}
+[data-theme="dark"] .badge-katolik .badge-dot {
+  background-color: #818cf8;
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.25);
 }
 
 [data-theme="dark"] .badge-hindu {
-  background-color: rgba(249, 115, 22, 0.15);
+  background-color: rgba(234, 88, 12, 0.15);
   color: #fb923c;
-  border-color: rgba(249, 115, 22, 0.3);
+  border-color: rgba(234, 88, 12, 0.3);
+}
+[data-theme="dark"] .badge-hindu .badge-dot {
+  background-color: #fb923c;
+  box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.25);
 }
 
 [data-theme="dark"] .badge-buddha {
-  background-color: rgba(234, 179, 8, 0.15);
+  background-color: rgba(202, 138, 4, 0.15);
   color: #facc15;
-  border-color: rgba(234, 179, 8, 0.3);
+  border-color: rgba(202, 138, 4, 0.3);
+}
+[data-theme="dark"] .badge-buddha .badge-dot {
+  background-color: #facc15;
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.25);
 }
 
 [data-theme="dark"] .badge-khonghucu {
-  background-color: rgba(236, 72, 153, 0.15);
-  color: #f472b6;
-  border-color: rgba(236, 72, 153, 0.3);
+  background-color: rgba(225, 29, 72, 0.15);
+  color: #fb7185;
+  border-color: rgba(225, 29, 72, 0.3);
+}
+[data-theme="dark"] .badge-khonghucu .badge-dot {
+  background-color: #fb7185;
+  box-shadow: 0 0 0 2px rgba(251, 113, 133, 0.25);
+}
+
+[data-theme="dark"] .badge-kepercayaan {
+  background-color: rgba(100, 116, 139, 0.15);
+  color: #cbd5e1;
+  border-color: rgba(100, 116, 139, 0.3);
+}
+[data-theme="dark"] .badge-kepercayaan .badge-dot {
+  background-color: #94a3b8;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
+}
+
+[data-theme="dark"] .badge-rumahdoa {
+  background-color: rgba(13, 148, 136, 0.15);
+  color: #2dd4bf;
+  border-color: rgba(13, 148, 136, 0.3);
+}
+[data-theme="dark"] .badge-rumahdoa .badge-dot {
+  background-color: #2dd4bf;
+  box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.25);
+}
+
+[data-theme="dark"] .badge-lembaga {
+  background-color: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+  border-color: rgba(124, 58, 237, 0.3);
+}
+[data-theme="dark"] .badge-lembaga .badge-dot {
+  background-color: #a78bfa;
+  box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.25);
 }
 
 [data-theme="dark"] .badge-lembaga {
@@ -779,6 +905,15 @@ td.col-jenis {
 
 .link-cell:hover {
   text-decoration: underline;
+}
+
+/* Email Masked Styling (Sensor Alamat Email) */
+.email-masked {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.825rem;
+  letter-spacing: 0.02em;
+  color: var(--text-main);
+  opacity: 0.9;
 }
 
 /* ==========================================================================
@@ -1117,31 +1252,6 @@ td.col-jenis {
   color: var(--text-main);
 }
 
-.landing-stats-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  justify-content: center;
-  font-size: 0.825rem;
-  color: var(--text-muted);
-}
-
-.landing-stat-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.85rem;
-  background-color: var(--bg-subtle);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-full);
-  font-weight: 500;
-}
-
-.landing-stat-chip strong {
-  color: var(--text-main);
-  font-weight: 700;
-}
-
 /* Kecamatan Grid */
 .kecamatan-grid {
   display: grid;
@@ -1361,27 +1471,57 @@ td.col-jenis {
 .btn-ganti-kecamatan {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  background-color: var(--bg-card);
-  color: var(--text-main);
-  border: 1.5px solid var(--border-color);
-  padding: 0.55rem 1.15rem;
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  font-weight: 600;
+  gap: 0.6rem;
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1.5px solid #fecaca;
+  padding: 0.5rem 1.15rem;
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   cursor: pointer;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.12);
   transition: var(--transition);
 }
 
 .btn-ganti-kecamatan:hover {
-  background-color: var(--bg-subtle);
-  border-color: var(--primary-600);
-  color: var(--primary-600);
+  background-color: #fee2e2;
+  border-color: #f87171;
+  color: #991b1b;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 10px rgba(220, 38, 38, 0.18);
+}
+
+.btn-ganti-kecamatan:active {
+  transform: translateY(0);
+  background-color: #fecaca;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.12);
 }
 
 .btn-ganti-kecamatan svg {
   width: 16px;
   height: 16px;
+  stroke: currentColor;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-ganti-kecamatan:hover svg {
+  transform: translateX(-3px);
+}
+
+[data-theme="dark"] .btn-ganti-kecamatan {
+  background-color: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .btn-ganti-kecamatan:hover {
+  background-color: rgba(239, 68, 68, 0.24);
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #fecaca;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }
 
 .export-hint-pill {
@@ -1452,7 +1592,8 @@ td.col-jenis {
     flex: 1 1 100%;
   }
 
-  .filter-select {
+  .filter-select,
+  #categoryFilterSelect {
     flex: 1 1 calc(50% - 0.35rem);
     min-width: 130px;
     font-size: 16px; /* Mencegah auto-zoom default browser mobile iOS Safari */
@@ -1465,11 +1606,13 @@ td.col-jenis {
   .controls-right {
     width: 100%;
     display: flex;
+    flex-direction: column;
     gap: 0.5rem;
   }
 
   .controls-right .btn {
-    flex: 1;
+    width: 100%;
+    flex: 1 1 100%;
     justify-content: center;
     padding: 0.65rem 0.85rem;
   }
@@ -1477,10 +1620,6 @@ td.col-jenis {
   .stats-banner {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
-  }
-
-  .stat-card:last-child {
-    grid-column: span 2;
   }
 
   .active-kecamatan-banner {
@@ -1643,8 +1782,30 @@ td.col-jenis {
   }
 
   /* Filter Selects Full Width di Layar Sempit */
-  .filter-select {
+  .filter-select,
+  #categoryFilterSelect {
     flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  /* Banner Header Kecamatan Mobile */
+  .active-kec-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .btn-ganti-kecamatan {
+    width: 100%;
+    justify-content: center;
+    padding: 0.7rem 1.25rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .export-hint-pill {
+    justify-content: center;
+    width: 100%;
   }
 
   /* Tabel Interaktif Mobile */
@@ -1731,30 +1892,6 @@ td.col-jenis {
    KEMENAG DATASET & DOWNLOAD STYLING
    ========================================================================== */
 
-/* 1. Hero Dual Stats */
-.hero-dual-stats {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2rem;
-  margin: 1.25rem 0 1.5rem 0;
-  flex-wrap: wrap;
-}
-
-.hero-stat-divider {
-  width: 1px;
-  height: 48px;
-  background-color: var(--border-color);
-}
-
-.hero-total-number.kemenag-number {
-  color: var(--primary-600);
-}
-
-[data-theme="dark"] .hero-total-number.kemenag-number {
-  color: #34d399;
-}
-
 /* 2. Stat Icon Kemenag */
 .stat-icon.kemenag {
   background-color: rgba(5, 150, 105, 0.12);
@@ -1794,96 +1931,6 @@ td.col-jenis {
   border-color: rgba(16, 185, 129, 0.3);
 }
 
-/* 4. Dataset Switcher Card & Tabs */
-.dataset-switcher-card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 0.75rem 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  box-shadow: var(--shadow-xs);
-  flex-wrap: wrap;
-}
-
-.dataset-tabs {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  background-color: var(--bg-subtle);
-  padding: 0.3rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-}
-
-.dataset-tab-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.84rem;
-  font-weight: 700;
-  border-radius: var(--radius-sm);
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: var(--transition);
-  outline: none;
-  font-family: inherit;
-}
-
-.dataset-tab-btn:hover {
-  color: var(--text-main);
-}
-
-.dataset-tab-btn.active {
-  background-color: var(--bg-card);
-  color: var(--primary-700);
-  box-shadow: var(--shadow-sm);
-}
-
-[data-theme="dark"] .dataset-tab-btn.active {
-  color: #34d399;
-}
-
-.tab-count-badge {
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 0.15rem 0.5rem;
-  border-radius: var(--radius-full);
-  background-color: var(--border-color);
-  color: var(--text-muted);
-  transition: var(--transition);
-}
-
-.dataset-tab-btn.active .tab-count-badge {
-  background-color: var(--primary-100);
-  color: var(--primary-800);
-}
-
-[data-theme="dark"] .dataset-tab-btn.active .tab-count-badge {
-  background-color: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-}
-
-.tab-count-badge.badge-kemenag {
-  background-color: rgba(5, 150, 105, 0.15);
-  color: var(--primary-700);
-}
-
-[data-theme="dark"] .tab-count-badge.badge-kemenag {
-  background-color: rgba(16, 185, 129, 0.25);
-  color: #34d399;
-}
-
-.dataset-info-hint {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
 
 /* 5. Button Kemenag & Split Dropdown */
 .btn-kemenag {
@@ -1909,192 +1956,6 @@ td.col-jenis {
   background: rgba(255, 255, 255, 0.25);
   color: #ffffff;
   margin-left: 0.25rem;
-}
-
-.btn-group-dropdown {
-  position: relative;
-  display: inline-flex;
-  vertical-align: middle;
-}
-
-.btn-group-dropdown .btn-kemenag:first-child {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.btn-group-dropdown .btn-dropdown-toggle {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  padding: 0.5rem 0.55rem;
-}
-
-.btn-dropdown-toggle svg {
-  width: 14px;
-  height: 14px;
-}
-
-/* Dropdown Menu */
-.kemenag-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  z-index: 120;
-  min-width: 260px;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-xl);
-  padding: 0.4rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  animation: fadeInDown 0.15s ease-out;
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 0.85rem;
-  border: none;
-  background: transparent;
-  width: 100%;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  text-align: left;
-  color: var(--text-main);
-  font-family: inherit;
-  transition: var(--transition);
-}
-
-.dropdown-item:hover {
-  background-color: var(--bg-subtle);
-  color: var(--primary-700);
-}
-
-[data-theme="dark"] .dropdown-item:hover {
-  color: #34d399;
-}
-
-.dropdown-item svg {
-  flex-shrink: 0;
-  color: var(--primary-600);
-}
-
-.dropdown-item-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.item-title {
-  font-size: 0.825rem;
-  font-weight: 700;
-  color: var(--text-main);
-}
-
-.item-desc {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-}
-
-/* 6. Landing Cards Enhancements */
-.kecamatan-card-counts {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.count-pill-kemenag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.735rem;
-  font-weight: 700;
-  padding: 0.25rem 0.6rem;
-  border-radius: var(--radius-full);
-  background: rgba(5, 150, 105, 0.12);
-  color: var(--primary-700);
-  border: 1px solid rgba(5, 150, 105, 0.25);
-}
-
-[data-theme="dark"] .count-pill-kemenag {
-  background: rgba(16, 185, 129, 0.18);
-  color: #34d399;
-  border-color: rgba(16, 185, 129, 0.3);
-}
-
-.count-pill-kesra {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.735rem;
-  font-weight: 700;
-  padding: 0.25rem 0.6rem;
-  border-radius: var(--radius-full);
-  background: var(--bg-subtle);
-  color: var(--text-muted);
-  border: 1px solid var(--border-color);
-}
-
-/* Action button inside card footer */
-.btn-card-kemenag-dl {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.76rem;
-  font-weight: 700;
-  border-radius: var(--radius-sm);
-  background-color: rgba(5, 150, 105, 0.1);
-  color: var(--primary-700);
-  border: 1px solid rgba(5, 150, 105, 0.25);
-  cursor: pointer;
-  transition: var(--transition);
-  font-family: inherit;
-}
-
-.btn-card-kemenag-dl:hover {
-  background-color: var(--primary-600);
-  color: #ffffff;
-  border-color: var(--primary-600);
-  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
-  transform: translateY(-1px);
-}
-
-[data-theme="dark"] .btn-card-kemenag-dl {
-  background-color: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border-color: rgba(16, 185, 129, 0.3);
-}
-
-[data-theme="dark"] .btn-card-kemenag-dl:hover {
-  background-color: var(--primary-600);
-  color: #ffffff;
-}
-
-.btn-card-open {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.825rem;
-  font-weight: 700;
-  color: var(--primary-600);
-}
-
-[data-theme="dark"] .btn-card-open {
-  color: #34d399;
 }
 
 /* Print Layout */
@@ -2130,4 +1991,282 @@ td.col-jenis {
     font-size: 9.5pt;
     border-color: #ccc;
   }
+}
+
+/* ==========================================================================
+   FULL-PAGE BLOCKING INITIAL LOADER & ERROR SCREEN
+   ========================================================================== */
+.app-init-loader {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(240, 253, 244, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 1.5rem;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s ease;
+  opacity: 1;
+  visibility: visible;
+}
+
+[data-theme="dark"] .app-init-loader {
+  background: linear-gradient(135deg, rgba(11, 15, 25, 0.98) 0%, rgba(17, 24, 39, 0.98) 100%);
+}
+
+.app-init-loader.loader-fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.init-loader-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem 2rem;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  animation: initCardIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes initCardIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.init-loader-brand {
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.init-loader-logo-wrap {
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border-radius: var(--radius-full);
+  padding: 0.5rem;
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.18);
+  border: 2px solid rgba(5, 150, 105, 0.2);
+}
+
+.init-loader-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.init-loader-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.35rem;
+}
+
+.init-loader-subtitle {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.init-loader-state {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Spinner */
+.init-loader-spinner-wrap {
+  margin: 0.5rem 0 1.25rem;
+}
+
+.init-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3.5px solid rgba(5, 150, 105, 0.15);
+  border-top-color: var(--primary-600);
+  border-radius: 50%;
+  animation: initSpin 0.75s linear infinite;
+}
+
+@keyframes initSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.init-loader-message {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.85rem;
+}
+
+/* Animated Progress Bar */
+.init-loader-progress-track {
+  width: 100%;
+  max-width: 280px;
+  height: 5px;
+  background-color: var(--bg-subtle);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 0.85rem;
+}
+
+.init-loader-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 50%;
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  border-radius: var(--radius-full);
+  animation: indeterminateBar 1.4s ease-in-out infinite;
+}
+
+@keyframes indeterminateBar {
+  0% {
+    left: -50%;
+    width: 30%;
+  }
+  50% {
+    left: 25%;
+    width: 60%;
+  }
+  100% {
+    left: 100%;
+    width: 30%;
+  }
+}
+
+.init-loader-tip {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Error State */
+.init-error-icon-wrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.init-error-icon-wrap svg {
+  width: 30px;
+  height: 30px;
+}
+
+[data-theme="dark"] .init-error-icon-wrap {
+  background-color: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #f87171;
+}
+
+.init-error-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+}
+
+.init-error-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 1.35rem;
+}
+
+.init-error-desc strong {
+  color: var(--text-main);
+}
+
+.init-error-actions {
+  width: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.init-btn-refresh {
+  width: 100%;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.init-contact-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+
+.init-contact-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(5, 150, 105, 0.1);
+  color: var(--primary-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.init-contact-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.init-contact-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.init-contact-office {
+  font-size: 0.785rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.init-contact-sub {
+  font-size: 0.715rem;
+  color: var(--text-muted);
+  line-height: 1.3;
 }

@@ -8,6 +8,11 @@
   <meta name="description"
     content="Dashboard tabel interaktif pendataan tempat ibadah dengan pencarian instan, filter jenis, kecamatan, dan ekspor Excel otomatis.">
 
+  <!-- Favicon / Tab Icon Pemkab Gresik (Sama persis dengan Logo Navbar) -->
+  <link rel="icon" type="image/png" href="img/logo-gresik.png">
+  <link rel="shortcut icon" type="image/png" href="img/logo-gresik.png">
+  <link rel="apple-touch-icon" href="img/logo-gresik.png">
+
   <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="css/style.css">
 
@@ -33,14 +38,78 @@
 <body>
 
   <!-- ======================================================================
-       NAVBAR MINIMALIS
+       FULL-PAGE BLOCKING INITIAL LOADER & ERROR SCREEN
        ====================================================================== -->
+  <div id="appInitLoader" class="app-init-loader" role="dialog" aria-modal="true" aria-label="Memuat Data Aplikasi">
+    <div class="init-loader-card">
+      <!-- Logo Pemkab Gresik -->
+      <div class="init-loader-brand">
+        <div class="init-loader-logo-wrap">
+          <img src="img/logo-gresik.png" alt="Logo Pemkab Gresik" class="init-loader-logo">
+        </div>
+        <div class="init-loader-header">
+          <h2 class="init-loader-title">Sistem Informasi Pendataan Tempat Ibadah</h2>
+          <p class="init-loader-subtitle">Bagian Kesejahteraan Sosial &bull; Sekretariat Daerah Kabupaten Gresik</p>
+        </div>
+      </div>
+
+      <!-- State 1: Sedang Memuat Data (Loading State) -->
+      <div id="initLoaderActiveState" class="init-loader-state">
+        <div class="init-loader-spinner-wrap">
+          <div class="init-spinner"></div>
+        </div>
+        <p class="init-loader-message" id="initLoaderMsg">Memuat data tempat ibadah...</p>
+        <div class="init-loader-progress-track">
+          <div class="init-loader-progress-bar"></div>
+        </div>
+        <span class="init-loader-tip">Menyiapkan 18 wilayah kecamatan Kabupaten Gresik</span>
+      </div>
+
+      <!-- State 2: Gagal Memuat Data (Error State) -->
+      <div id="initLoaderErrorState" class="init-loader-state init-loader-error" style="display: none;">
+        <div class="init-error-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h3 class="init-error-title">Gagal Mengambil Data</h3>
+        <p class="init-error-desc" id="initErrorMsg">
+          Terjadi kendala saat mengambil data sistem pendataan tempat ibadah. Silakan muat ulang (refresh) halaman ini atau hubungi <strong>Bagian Kesejahteraan Sosial (Kesra) Kabupaten Gresik</strong>.
+        </p>
+
+        <div class="init-error-actions">
+          <button type="button" class="btn btn-primary init-btn-refresh" id="initLoaderRefreshBtn" onclick="window.location.reload();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span>Muat Ulang Halaman</span>
+          </button>
+        </div>
+
+        <div class="init-contact-card">
+          <div class="init-contact-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+          </div>
+          <div class="init-contact-info">
+            <span class="init-contact-office">Bagian Kesejahteraan Sosial (Kesra)</span>
+            <span class="init-contact-sub">Sekretariat Daerah Kabupaten Gresik &bull; Kantor Bupati Gresik</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   <header class="navbar">
     <div class="nav-container">
       <div class="brand-section">
         <div class="brand-icon">
-          <img src="https://gresikkab.go.id/storage/setting/1767981476_logo-footer.png" alt="Logo Pemkab Gresik"
-            class="brand-logo-img" onerror="this.onerror=null; this.src='img/logo-gresik.png';">
+          <img src="img/logo-gresik.png" alt="Logo Pemkab Gresik" class="brand-logo-img">
         </div>
         <div class="brand-info">
           <h1>
@@ -186,8 +255,9 @@
           <!-- Tombol Ganti Kecamatan untuk Kembali ke List Landing -->
           <button type="button" class="btn-ganti-kecamatan" id="changeKecamatanBtn"
             title="Kembali ke halaman pemilihan kecamatan">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="15 18 9 12 15 6"></polyline>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
             <span>Ganti Kecamatan</span>
           </button>
@@ -251,36 +321,6 @@
         </div>
       </section>
 
-      <!-- Tab Switcher: Pilih Dataset yang Ingin Ditampilkan & Diunduh -->
-      <div class="dataset-switcher-card">
-        <div class="dataset-tabs">
-          <button type="button" class="dataset-tab-btn active" id="tabKesraBtn"
-            title="Lihat hasil pengisian data formulir kesra">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-            <span>Data Pendataan Kesra</span>
-            <span class="tab-count-badge" id="tabKesraBadge">0</span>
-          </button>
-          <button type="button" class="dataset-tab-btn" id="tabKemenagBtn"
-            title="Lihat data referensi resmi dari Kementerian Agama">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-              <path d="M2 17l10 5 10-5"></path>
-              <path d="M2 12l10 5 10-5"></path>
-            </svg>
-            <span>Data Resmi Kemenag</span>
-            <span class="tab-count-badge badge-kemenag" id="tabKemenagBadge">0</span>
-          </button>
-        </div>
-        <div class="dataset-info-hint" id="datasetInfoHint">
-          <span id="datasetHintText">Menampilkan data formulir survei pendataan mandiri tempat ibadah di wilayah
-            ini</span>
-        </div>
-      </div>
 
       <!-- Toolbar Kontrol, Filter & Ekspor (Khusus Kecamatan Terpilih) -->
       <section class="table-controls-card">
