@@ -327,11 +327,6 @@ function showInitLoader(message = "Memuat data tempat ibadah...") {
   if (msgEl) msgEl.textContent = message;
 }
 
-function updateInitLoaderMessage(message) {
-  const msgEl = document.getElementById("initLoaderMsg");
-  if (msgEl) msgEl.textContent = message;
-}
-
 function hideInitLoader() {
   const loader = document.getElementById("appInitLoader");
   if (!loader) return;
@@ -358,88 +353,101 @@ function showInitLoaderError(customMessage) {
   }
 }
 
-// Memuat Data Pertama Kali (Instan, Bebas CORS & Offline-First dengan Layar Pemuat Penuh)
+// Helper untuk mengambil CSV data online terbaru dengan batas waktu (timeout)
+async function fetchFreshOnlineCSV(timeoutMs = 4000) {
+  const directEndpoint = `${REMOTE_DATA_ENDPOINT}&_t=${Date.now()}`;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const res = await fetch(directEndpoint, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.includes("JENIS TEMPAT IBADAH") && text.length > 1000) {
+        return text;
+      }
+    }
+  } catch (e) {
+    // Jaringan offline, CORS, atau timeout
+  }
+  return null;
+}
+
+// Memuat Data Pertama Kali (Menunggu data terbaru sebelum layar loading ditutup agar tidak ada lonjakan data)
 async function bootstrapData() {
   const startTime = Date.now();
-  showInitLoader("Memuat data sistem pendataan...");
+  showInitLoader("Memeriksa dan mengambil data terbaru...");
 
   try {
-    const cachedCSV = localStorage.getItem(STORAGE_KEY_CACHE);
-    const cachedTime = localStorage.getItem(STORAGE_KEY_TIME);
-    const initialCSV = window.INITIAL_DATABASE_CSV || "";
+    // 1. Coba ambil data online terbaru terlebih dahulu (timeout 3.5 detik)
+    let rawCSV = await fetchFreshOnlineCSV(3500);
+    let isFreshOnline = false;
 
-    // Hitung perkiraan baris data untuk menentukan mana versi yang lebih lengkap/terbaru
-    const cachedLines = cachedCSV ? (cachedCSV.match(/\n/g) || []).length : 0;
-    const initialLines = initialCSV ? (initialCSV.match(/\n/g) || []).length : 0;
+    if (rawCSV) {
+      isFreshOnline = true;
+      localStorage.setItem(STORAGE_KEY_CACHE, rawCSV);
+      const now = new Date();
+      localStorage.setItem(STORAGE_KEY_TIME, now.toISOString());
+      state.lastUpdated = now;
+    } else {
+      // 2. Jika online gagal/timeout/offline, gunakan data cadangan lokal (cache atau snapshot file data.js)
+      const cachedCSV = localStorage.getItem(STORAGE_KEY_CACHE);
+      const cachedTime = localStorage.getItem(STORAGE_KEY_TIME);
+      const initialCSV = window.INITIAL_DATABASE_CSV || "";
 
-    let rawCSV = "";
-    // Jika file lokal (initialCSV) memiliki baris lebih banyak atau sama (misal ada data baru seperti 1.128)
-    if (initialLines >= cachedLines && initialCSV.length > 500) {
-      rawCSV = initialCSV;
-      localStorage.setItem(STORAGE_KEY_CACHE, initialCSV);
-      if (window.INITIAL_DATABASE_TIME) {
-        state.lastUpdated = new Date(window.INITIAL_DATABASE_TIME);
-      } else if (cachedTime) {
-        state.lastUpdated = new Date(cachedTime);
-      } else {
-        state.lastUpdated = new Date();
+      const cachedLines = cachedCSV ? (cachedCSV.match(/\n/g) || []).length : 0;
+      const initialLines = initialCSV ? (initialCSV.match(/\n/g) || []).length : 0;
+
+      if (initialLines >= cachedLines && initialCSV.length > 500) {
+        rawCSV = initialCSV;
+        state.lastUpdated = window.INITIAL_DATABASE_TIME ? new Date(window.INITIAL_DATABASE_TIME) : new Date();
+      } else if (cachedCSV && cachedCSV.length > 500) {
+        rawCSV = cachedCSV;
+        state.lastUpdated = cachedTime ? new Date(cachedTime) : new Date();
+      } else if (initialCSV && initialCSV.length > 500) {
+        rawCSV = initialCSV;
+        state.lastUpdated = window.INITIAL_DATABASE_TIME ? new Date(window.INITIAL_DATABASE_TIME) : new Date();
       }
-      localStorage.setItem(STORAGE_KEY_TIME, state.lastUpdated.toISOString());
-    } else if (cachedCSV && cachedCSV.length > 500) {
-      rawCSV = cachedCSV;
-      if (cachedTime) state.lastUpdated = new Date(cachedTime);
-      else state.lastUpdated = new Date();
-    } else if (initialCSV && initialCSV.length > 500) {
-      rawCSV = initialCSV;
-      state.lastUpdated = window.INITIAL_DATABASE_TIME ? new Date(window.INITIAL_DATABASE_TIME) : new Date();
     }
 
-    // 1. Jika data tersedia (dari file snapshot lokal maupun cache browser)
+    // 3. Masukkan data ke state dan render ke antarmuka pengguna
     if (rawCSV) {
       const isLoaded = loadCSVToState(rawCSV);
       if (isLoaded && state.rawRows.length > 0) {
         updateBannerMetrics();
         const isFileProtocol = window.location.protocol === "file:";
-        updateStatus("active", isFileProtocol ? `Data Aktif (${state.rawRows.length.toLocaleString("id-ID")} Data)` : `Terhubung (${state.rawRows.length.toLocaleString("id-ID")} Data)`);
 
-        // Jeda minimal 450ms agar animasi loading tampak halus dan elegan (tidak flicker)
+        if (isFreshOnline) {
+          updateStatus("active", `Terhubung Online (${state.rawRows.length.toLocaleString("id-ID")} Data)`);
+        } else if (isFileProtocol) {
+          updateStatus("active", `Data Aktif (${state.rawRows.length.toLocaleString("id-ID")} Data)`);
+        } else {
+          updateStatus("active", `Terhubung (${state.rawRows.length.toLocaleString("id-ID")} Data)`);
+        }
+
+        // Pastikan loading screen tampil minimal 450ms agar transisi halus
         const elapsed = Date.now() - startTime;
         const delay = Math.max(0, 450 - elapsed);
         setTimeout(() => {
           hideInitLoader();
         }, delay);
 
-        // Tarik data online terbaru di latar belakang (background sync)
-        syncOnlineData(false);
-
-        // Cek pembaruan berkala setiap 3 menit di latar belakang
+        // Jadwalkan pemeriksaan berkala di latar belakang setiap 3 menit
+        // (TIDAK ADA sinkronisasi instan kedua yang mengubah data seketika setelah loading)
         setInterval(() => {
           syncOnlineData(false);
         }, 3 * 60 * 1000);
+
         return;
       }
     }
 
-    // 2. Jika belum ada data lokal (misal snapshot file belum siap / cache kosong), hubungi server online
-    updateInitLoaderMessage("Menghubungkan ke server data pusat...");
-    const onlineSuccess = await syncOnlineData(false);
-
-    if (onlineSuccess && state.rawRows.length > 0) {
-      const elapsed = Date.now() - startTime;
-      const delay = Math.max(0, 400 - elapsed);
-      setTimeout(() => {
-        hideInitLoader();
-      }, delay);
-
-      setInterval(() => {
-        syncOnlineData(false);
-      }, 3 * 60 * 1000);
-    } else {
-      // Gagal mengambil data pertama! Tampilkan pesan error dan opsi hubungi Kesra
-      showInitLoaderError(
-        "Terjadi kendala saat mengambil data sistem pendataan tempat ibadah. Silakan muat ulang (refresh) halaman ini atau hubungi <strong>Bagian Kesejahteraan Sosial (Kesra) Kabupaten Gresik</strong>."
-      );
-    }
+    // 4. Jika gagal total (tidak ada data online dan tidak ada data offline)
+    showInitLoaderError(
+      "Terjadi kendala saat mengambil data sistem pendataan tempat ibadah. Silakan muat ulang (refresh) halaman ini atau hubungi <strong>Bagian Kesejahteraan Sosial (Kesra) Kabupaten Gresik</strong>."
+    );
   } catch (err) {
     console.error("Gagal bootstrap data:", err);
     showInitLoaderError(
@@ -1674,28 +1682,8 @@ async function syncOnlineData(isManual = false) {
     showToast("Menghubungkan ke server data ...", "info");
   }
 
-  // Prioritaskan endpoint langsung server data pusat dengan cache-buster timestamp
-  const directEndpoint = `${REMOTE_DATA_ENDPOINT}&_t=${Date.now()}`;
   const isFileProtocol = window.location.protocol === "file:";
-
-  let freshCSV = null;
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000); // 7s timeout
-
-    const res = await fetch(directEndpoint, { signal: controller.signal });
-    clearTimeout(timeoutId);
-
-    if (res.ok) {
-      const text = await res.text();
-      if (text && text.includes("JENIS TEMPAT IBADAH") && text.length > 1000) {
-        freshCSV = text;
-      }
-    }
-  } catch (e) {
-    // Error jaringan atau CORS pada file://
-  }
+  const freshCSV = await fetchFreshOnlineCSV(6000);
 
   if (freshCSV) {
     localStorage.setItem(STORAGE_KEY_CACHE, freshCSV);
