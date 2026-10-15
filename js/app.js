@@ -1,6 +1,6 @@
 /**
  * Sistem Informasi Pendataan Tempat Ibadah
- * Bagian Kesejahteraan Sosial - Sekretariat Daerah Kabupaten Gresik
+ * Bagian Kesejahteraan Rakyat - Sekretariat Daerah Kabupaten Gresik
  * Interactive Engine with Mandatory Kecamatan Gateway & Scoped District Export
  */
 
@@ -446,12 +446,12 @@ async function bootstrapData() {
 
     // 4. Jika gagal total (tidak ada data online dan tidak ada data offline)
     showInitLoaderError(
-      "Terjadi kendala saat mengambil data sistem pendataan tempat ibadah. Silakan muat ulang (refresh) halaman ini atau hubungi <strong>Bagian Kesejahteraan Sosial (Kesra) Kabupaten Gresik</strong>."
+      "Terjadi kendala saat mengambil data sistem pendataan tempat ibadah. Silakan muat ulang (refresh) halaman ini atau hubungi <strong>Bagian Kesejahteraan Rakyat (Kesra) Kabupaten Gresik</strong>."
     );
   } catch (err) {
     console.error("Gagal bootstrap data:", err);
     showInitLoaderError(
-      "Terjadi kendala saat memproses data sistem pendataan tempat ibadah. Silakan muat ulang (refresh) halaman ini atau hubungi <strong>Bagian Kesejahteraan Sosial (Kesra) Kabupaten Gresik</strong>."
+      "Terjadi kendala saat memproses data sistem pendataan tempat ibadah. Silakan muat ulang (refresh) halaman ini atau hubungi <strong>Bagian Kesejahteraan Rakyat (Kesra) Kabupaten Gresik</strong>."
     );
   }
 }
@@ -1139,7 +1139,7 @@ function formatCellValue(val, colHeader = "") {
     } else if (lowerVal.includes("rumah doa")) {
       badgeClass = "badge-rumahdoa";
     }
-    return `<span class="table-badge ${badgeClass}"><span class="badge-dot"></span><span>${escapeHTML(str)}</span></span>`;
+    return `<span class="table-badge ${badgeClass}">${escapeHTML(str)}</span>`;
   }
 
   // Badge Status Kelengkapan (khusus kolom status utama, bukan kolom alasan kekurangan)
@@ -1412,6 +1412,7 @@ function exportToExcel() {
     const kecName = state.selectedKecamatan.toUpperCase();
     const titleRow1 = [`DATA PENDATAAN TEMPAT IBADAH & LEMBAGA KEAGAMAAN KABUPATEN GRESIK`];
     const titleRow2 = [`WILAYAH KECAMATAN ${kecName} - BAGIAN KESRA KAB. GRESIK`];
+    const emptyRow = [];
     const exportHeaders = ["No", ...state.rawHeaders.map(formatColumnHeader)];
     const exportRows = dataToExport.map((row, idx) => {
       const formattedCells = row.map((cell, colIdx) => {

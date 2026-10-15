@@ -1,6 +1,6 @@
 /* ==========================================================================
    Sistem Informasi Pendataan Tempat Ibadah - Modern Design System
-   Bagian Kesejahteraan Sosial - Sekretariat Daerah Kabupaten Gresik
+   Bagian Kesejahteraan Rakyat - Sekretariat Daerah Kabupaten Gresik
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -637,260 +637,190 @@ td.col-jenis {
   white-space: nowrap;
 }
 
-/* Badges inside cells: Modern Tag / Chip with Indicator Dot (Bukan AI pill lonjong) */
+/* Badges inside cells: Solid Compact Box (Human-Crafted Modern UI) */
 .table-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.25rem 0.65rem;
-  font-size: 0.76rem;
-  font-weight: 600;
-  border-radius: var(--radius-sm); /* 6px - bentuk chip persegi bersudut halus */
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  justify-content: center;
+  padding: 0.22rem 0.58rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 4px;
   line-height: 1.25;
-  transition: var(--transition);
+  white-space: nowrap;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  user-select: none;
 }
 
-.table-badge .badge-dot {
-  width: 6.5px;
-  height: 6.5px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  display: inline-block;
+.table-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
-/* 1. Islam / Masjid */
+/* 1. Islam / Masjid (Solid Emerald Green) */
 .badge-islam {
-  background-color: #f0fdf4;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-}
-.badge-islam .badge-dot {
-  background-color: #16a34a;
-  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+  background-color: #15803d;
+  color: #ffffff;
+  border: 1px solid #166534;
 }
 
-/* 2. Mushollah / Langgar */
+/* 2. Mushollah / Langgar (Solid Sky Blue) */
 .badge-musholla {
-  background-color: #f0f9ff;
-  color: #075985;
-  border: 1px solid #bae6fd;
-}
-.badge-musholla .badge-dot {
   background-color: #0284c7;
-  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+  color: #ffffff;
+  border: 1px solid #0369a1;
 }
 
-/* 3. Kristen */
+/* 3. Kristen (Solid Royal Blue) */
 .badge-kristen {
-  background-color: #eff6ff;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
-}
-.badge-kristen .badge-dot {
   background-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  color: #ffffff;
+  border: 1px solid #1d4ed8;
 }
 
-/* 4. Katolik */
+/* 4. Katolik (Solid Indigo) */
 .badge-katolik {
-  background-color: #eef2ff;
-  color: #3730a3;
-  border: 1px solid #c7d2fe;
-}
-.badge-katolik .badge-dot {
   background-color: #4f46e5;
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+  color: #ffffff;
+  border: 1px solid #4338ca;
 }
 
-/* 5. Hindu / Pura */
+/* 5. Hindu / Pura (Solid Deep Orange) */
 .badge-hindu {
-  background-color: #fff7ed;
-  color: #9a3412;
-  border: 1px solid #fed7aa;
-}
-.badge-hindu .badge-dot {
-  background-color: #ea580c;
-  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.2);
+  background-color: #e7a310;
+  color: #ffffff;
+  border: 1px solid #c2880d;
 }
 
-/* 6. Buddha / Vihara */
+/* 6. Buddha / Vihara (Solid Warm Amber) */
 .badge-buddha {
-  background-color: #fefce8;
-  color: #854d0e;
-  border: 1px solid #fef08a;
-}
-.badge-buddha .badge-dot {
-  background-color: #ca8a04;
-  box-shadow: 0 0 0 2px rgba(202, 138, 4, 0.2);
+  background-color: #d97706;
+  color: #ffffff;
+  border: 1px solid #b45309;
 }
 
-/* 7. Khonghucu / Klenteng */
+/* 7. Khonghucu / Klenteng (Solid Crimson) */
 .badge-khonghucu {
-  background-color: #fff1f2;
-  color: #9f1239;
-  border: 1px solid #fecdd3;
-}
-.badge-khonghucu .badge-dot {
   background-color: #e11d48;
-  box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.2);
+  color: #ffffff;
+  border: 1px solid #be123c;
 }
 
-/* 8. Kepercayaan YME */
+/* 8. Kepercayaan YME (Solid Slate) */
 .badge-kepercayaan {
-  background-color: #f8fafc;
-  color: #334155;
-  border: 1px solid #cbd5e1;
-}
-.badge-kepercayaan .badge-dot {
-  background-color: #64748b;
-  box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.2);
+  background-color: #475569;
+  color: #ffffff;
+  border: 1px solid #334155;
 }
 
-/* 9. Rumah Doa */
+/* 9. Rumah Doa (Solid Deep Teal) */
 .badge-rumahdoa {
-  background-color: #f0fdfa;
-  color: #115e59;
-  border: 1px solid #99f6e4;
-}
-.badge-rumahdoa .badge-dot {
   background-color: #0d9488;
-  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+  color: #ffffff;
+  border: 1px solid #0f766e;
 }
 
-/* 10. Lembaga Keagamaan */
+/* 10. Lembaga Keagamaan (Solid Purple) */
 .badge-lembaga {
-  background-color: #f5f3ff;
-  color: #5b21b6;
-  border: 1px solid #ddd6fe;
-}
-.badge-lembaga .badge-dot {
   background-color: #7c3aed;
-  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+  color: #ffffff;
+  border: 1px solid #6d28d9;
 }
 
-/* Status Kelengkapan */
+/* Status Kelengkapan (Solid Status Badges) */
 .badge-lengkap {
-  background-color: #ecfdf5;
-  color: #047857;
-  border: 1px solid #6ee7b7;
+  background-color: #10b981;
+  color: #ffffff;
+  border: 1px solid #059669;
   font-weight: 700;
 }
 
 .badge-belum {
-  background-color: #fffbeb;
-  color: #b45309;
-  border: 1px solid #fde68a;
+  background-color: #f59e0b;
+  color: #ffffff;
+  border: 1px solid #d97706;
   font-weight: 700;
 }
 
-/* Dark Mode Badges */
-[data-theme="dark"] .badge-islam {
-  background-color: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border-color: rgba(16, 185, 129, 0.3);
+/* Dark Mode Badges: Solid with calibrated vibrancy & depth */
+[data-theme="dark"] .table-badge {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
-[data-theme="dark"] .badge-islam .badge-dot {
-  background-color: #34d399;
-  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.25);
+
+[data-theme="dark"] .badge-islam {
+  background-color: #16a34a;
+  border-color: #22c55e;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .badge-musholla {
-  background-color: rgba(2, 132, 199, 0.15);
-  color: #38bdf8;
-  border-color: rgba(2, 132, 199, 0.3);
-}
-[data-theme="dark"] .badge-musholla .badge-dot {
-  background-color: #38bdf8;
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+  background-color: #0284c7;
+  border-color: #38bdf8;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .badge-kristen {
-  background-color: rgba(37, 99, 235, 0.15);
-  color: #60a5fa;
-  border-color: rgba(37, 99, 235, 0.3);
-}
-[data-theme="dark"] .badge-kristen .badge-dot {
-  background-color: #60a5fa;
-  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25);
+  background-color: #2563eb;
+  border-color: #60a5fa;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .badge-katolik {
-  background-color: rgba(79, 70, 229, 0.15);
-  color: #818cf8;
-  border-color: rgba(79, 70, 229, 0.3);
-}
-[data-theme="dark"] .badge-katolik .badge-dot {
-  background-color: #818cf8;
-  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.25);
+  background-color: #4f46e5;
+  border-color: #818cf8;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .badge-hindu {
-  background-color: rgba(234, 88, 12, 0.15);
-  color: #fb923c;
-  border-color: rgba(234, 88, 12, 0.3);
-}
-[data-theme="dark"] .badge-hindu .badge-dot {
-  background-color: #fb923c;
-  box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.25);
+  background-color: #ea580c;
+  border-color: #fb923c;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .badge-buddha {
-  background-color: rgba(202, 138, 4, 0.15);
-  color: #facc15;
-  border-color: rgba(202, 138, 4, 0.3);
-}
-[data-theme="dark"] .badge-buddha .badge-dot {
-  background-color: #facc15;
-  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.25);
+  background-color: #d97706;
+  border-color: #facc15;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .badge-khonghucu {
-  background-color: rgba(225, 29, 72, 0.15);
-  color: #fb7185;
-  border-color: rgba(225, 29, 72, 0.3);
-}
-[data-theme="dark"] .badge-khonghucu .badge-dot {
-  background-color: #fb7185;
-  box-shadow: 0 0 0 2px rgba(251, 113, 133, 0.25);
+  background-color: #e11d48;
+  border-color: #fb7185;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .badge-kepercayaan {
-  background-color: rgba(100, 116, 139, 0.15);
-  color: #cbd5e1;
-  border-color: rgba(100, 116, 139, 0.3);
-}
-[data-theme="dark"] .badge-kepercayaan .badge-dot {
-  background-color: #94a3b8;
-  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
+  background-color: #475569;
+  border-color: #64748b;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .badge-rumahdoa {
-  background-color: rgba(13, 148, 136, 0.15);
-  color: #2dd4bf;
-  border-color: rgba(13, 148, 136, 0.3);
-}
-[data-theme="dark"] .badge-rumahdoa .badge-dot {
-  background-color: #2dd4bf;
-  box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.25);
+  background-color: #0d9488;
+  border-color: #2dd4bf;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .badge-lembaga {
-  background-color: rgba(124, 58, 237, 0.15);
-  color: #a78bfa;
-  border-color: rgba(124, 58, 237, 0.3);
-}
-[data-theme="dark"] .badge-lembaga .badge-dot {
-  background-color: #a78bfa;
-  box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.25);
+  background-color: #7c3aed;
+  border-color: #a78bfa;
+  color: #ffffff;
 }
 
-[data-theme="dark"] .badge-lembaga {
-  background-color: rgba(124, 58, 237, 0.15);
-  color: #a78bfa;
-  border-color: rgba(124, 58, 237, 0.3);
+[data-theme="dark"] .badge-lengkap {
+  background-color: #10b981;
+  border-color: #34d399;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .badge-belum {
+  background-color: #d97706;
+  border-color: #fbbf24;
+  color: #ffffff;
 }
 
 /* Coordinates & link styling */
@@ -1596,11 +1526,13 @@ td.col-jenis {
   #categoryFilterSelect {
     flex: 1 1 calc(50% - 0.35rem);
     min-width: 130px;
-    font-size: 16px; /* Mencegah auto-zoom default browser mobile iOS Safari */
+    font-size: 16px;
+    /* Mencegah auto-zoom default browser mobile iOS Safari */
   }
 
   .search-input {
-    font-size: 16px; /* Mencegah auto-zoom default browser mobile iOS Safari */
+    font-size: 16px;
+    /* Mencegah auto-zoom default browser mobile iOS Safari */
   }
 
   .controls-right {
@@ -1642,7 +1574,9 @@ td.col-jenis {
 
 /* 3. Mobile Phones (max-width: 640px) */
 @media (max-width: 640px) {
-  html, body {
+
+  html,
+  body {
     overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
   }
@@ -1727,7 +1661,8 @@ td.col-jenis {
   }
 
   .landing-search-input {
-    font-size: 16px; /* Mencegah auto-zoom default iOS Safari */
+    font-size: 16px;
+    /* Mencegah auto-zoom default iOS Safari */
     padding: 0.75rem 2.4rem 0.75rem 2.6rem;
   }
 
@@ -2045,6 +1980,7 @@ td.col-jenis {
     opacity: 0;
     transform: scale(0.96) translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -2153,10 +2089,12 @@ td.col-jenis {
     left: -50%;
     width: 30%;
   }
+
   50% {
     left: 25%;
     width: 60%;
   }
+
   100% {
     left: 100%;
     width: 30%;

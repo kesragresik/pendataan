@@ -1,5 +1,5 @@
 # Panduan Sistem Informasi Pendataan Tempat Ibadah Web
-**Bagian Kesejahteraan Sosial - Sekretariat Daerah Kabupaten Gresik**
+**Bagian Kesejahteraan Rakyat - Sekretariat Daerah Kabupaten Gresik**
 
 Aplikasi web dashboard interaktif pendataan tempat ibadah dan lembaga keagamaan se-Kabupaten Gresik dengan **alur seleksi wilayah (Kecamatan Gateway)** dan sistem ekspor laporan per kecamatan.
 
@@ -38,11 +38,3 @@ Dapat langsung dibuka cukup dengan **klik ganda (double-click)** pada file [`ind
   - `Data_Pendataan_Tempat_Ibadah_KEBOMAS_10-Oktober-2026.pdf`
 * **Nama Tab Excel:** Tab di dalam Microsoft Excel otomatis dinamai sesuai nama kecamatan (misal `KEBOMAS`). Lebar kolom diatur otomatis agar rapi saat dicetak atau diarsip.
 
----
-
-## 2. Cara Membuka & Menggunakan
-
-1. Buka File Explorer di komputer Anda.
-2. Cukup klik ganda (*double-click*) file:
-   👉 **[`index.html`](file:///c:/Users/W/Downloads/Compressed/web%20pendataan/index.html)**
-3. Web akan langsung terbuka di browser Anda (Chrome, Microsoft Edge, Firefox, dll.) dalam 0 detik!
