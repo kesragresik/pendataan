@@ -32,7 +32,6 @@ const state = {
   kecamatanColIdx: -1,
   statusColIdx: -1,
   timestampColIdx: -1,
-  emailColIdx: -1,
   lastUpdated: null
 };
 
@@ -51,27 +50,7 @@ function cleanLeadingSpaces(val) {
   return str.trimStart();
 }
 
-/**
- * Sensor / Samarkan Alamat Email untuk Perlindungan Privasi (Contoh: ma***al@gmail.com)
- */
-function maskEmail(val) {
-  if (val === null || val === undefined) return "";
-  const str = val.toString();
-  return str.replace(/([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, (match, user, domain) => {
-    let maskedUser = "";
-    if (user.length <= 2) {
-      maskedUser = user[0] + "*";
-    } else if (user.length === 3) {
-      maskedUser = user[0] + "*" + user[2];
-    } else if (user.length <= 5) {
-      maskedUser = user.slice(0, 2) + "***" + user.slice(-1);
-    } else {
-      // Panjang > 5 karakter: tampilkan 2 karakter awal, ***, dan 2 karakter akhir sebelum @
-      maskedUser = user.slice(0, 2) + "***" + user.slice(-2);
-    }
-    return `${maskedUser}@${domain}`;
-  });
-}
+
 
 // Robust CSV Parser (Menangani koma dalam kutip, baris baru/multiline di dalam sel)
 function parseCSV(csvText) {
@@ -434,12 +413,6 @@ async function bootstrapData() {
           hideInitLoader();
         }, delay);
 
-        // Jadwalkan pemeriksaan berkala di latar belakang setiap 3 menit
-        // (TIDAK ADA sinkronisasi instan kedua yang mengubah data seketika setelah loading)
-        setInterval(() => {
-          syncOnlineData(false);
-        }, 3 * 60 * 1000);
-
         return;
       }
     }
@@ -506,7 +479,6 @@ function detectKeyColumns() {
   state.kecamatanColIdx = state.rawHeaders.findIndex(h => /kecamatan/i.test(h));
   state.statusColIdx = state.rawHeaders.findIndex(h => /apakah sudah terisi|lengkap/i.test(h));
   state.timestampColIdx = state.rawHeaders.findIndex(h => /timestamp|waktu|tanggal/i.test(h));
-  state.emailColIdx = state.rawHeaders.findIndex(h => /email|pos-el/i.test(h));
 
   // Default otomatis sorting descending pada kolom timestamp jika ditemukan
   if (state.timestampColIdx !== -1) {
@@ -1110,11 +1082,7 @@ function formatCellValue(val, colHeader = "") {
 
   const lowerHeader = (colHeader || "").toLowerCase();
 
-  // Sensor Email: bila kolom terkait email atau nilai sel mengandung format email
-  if (lowerHeader.includes("email") || (str.includes("@") && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(str.trim()))) {
-    const masked = maskEmail(str);
-    return `<span class="email-masked" title="Alamat email disamarkan untuk perlindungan privasi">${escapeHTML(masked)}</span>`;
-  }
+
 
   // Badge Jenis Tempat Ibadah (Modern Data Chip dengan Dot Indicator)
   if (/jenis/i.test(lowerHeader)) {
@@ -1415,15 +1383,7 @@ function exportToExcel() {
     const emptyRow = [];
     const exportHeaders = ["No", ...state.rawHeaders.map(formatColumnHeader)];
     const exportRows = dataToExport.map((row, idx) => {
-      const formattedCells = row.map((cell, colIdx) => {
-        let val = cleanLeadingSpaces(cell || "");
-        const rawHeader = (state.rawHeaders[colIdx] || "").toLowerCase();
-        // Sensor alamat email pada file export Excel untuk perlindungan privasi
-        if (rawHeader.includes("email") || (typeof val === "string" && val.includes("@") && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val.trim()))) {
-          val = maskEmail(val);
-        }
-        return val;
-      });
+      const formattedCells = row.map(cell => cleanLeadingSpaces(cell || ""));
       return [idx + 1, ...formattedCells];
     });
     const exportData = [titleRow1, titleRow2, emptyRow, exportHeaders, ...exportRows];
@@ -1606,15 +1566,7 @@ function exportToPDF() {
     // Header tabel (Bahasa Indonesia)
     const exportHeaders = ["No", ...state.rawHeaders.map(formatColumnHeader)];
     const exportRows = dataToExport.map((row, idx) => {
-      const formattedCells = row.map((c, colIdx) => {
-        let val = cleanLeadingSpaces(c || "-");
-        const rawHeader = (state.rawHeaders[colIdx] || "").toLowerCase();
-        // Sensor alamat email pada file export PDF untuk perlindungan privasi
-        if (rawHeader.includes("email") || (typeof val === "string" && val.includes("@") && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val.trim()))) {
-          val = maskEmail(val);
-        }
-        return val;
-      });
+      const formattedCells = row.map(c => cleanLeadingSpaces(c || "-"));
       return [idx + 1, ...formattedCells];
     });
 

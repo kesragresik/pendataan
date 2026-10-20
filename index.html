@@ -76,11 +76,13 @@
         </div>
         <h3 class="init-error-title">Gagal Mengambil Data</h3>
         <p class="init-error-desc" id="initErrorMsg">
-          Terjadi kendala saat mengambil data sistem pendataan tempat ibadah. Silakan muat ulang (refresh) halaman ini atau hubungi <strong>Bagian Kesejahteraan Rakyat (Kesra) Kabupaten Gresik</strong>.
+          Terjadi kendala saat mengambil data sistem pendataan tempat ibadah. Silakan muat ulang (refresh) halaman ini
+          atau hubungi <strong>Bagian Kesejahteraan Rakyat (Kesra) Kabupaten Gresik</strong>.
         </p>
 
         <div class="init-error-actions">
-          <button type="button" class="btn btn-primary init-btn-refresh" id="initLoaderRefreshBtn" onclick="window.location.reload();">
+          <button type="button" class="btn btn-primary init-btn-refresh" id="initLoaderRefreshBtn"
+            onclick="window.location.reload();">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="23 4 23 10 17 10"></polyline>
               <polyline points="1 20 1 14 7 14"></polyline>
@@ -160,17 +162,11 @@
 
       <!-- Hero Sambutan & Instruksi -->
       <div class="landing-hero">
-        <div class="hero-pill-badge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-          </svg>
-          <span>Kabupaten Gresik &bull; Bagian Kesejahteraan Rakyat</span>
-        </div>
         <h2>Pilih Wilayah Kecamatan</h2>
 
         <!-- Total Data Besar di Hero Section -->
         <div class="hero-total-stat">
-          <span class="hero-total-number" id="landingHeroTotalNumber">1.128</span>
+          <span class="hero-total-number" id="landingHeroTotalNumber">1.178</span>
           <span class="hero-total-label">Total Data Tempat Ibadah</span>
         </div>
 
@@ -255,7 +251,8 @@
           <!-- Tombol Ganti Kecamatan untuk Kembali ke List Landing -->
           <button type="button" class="btn-ganti-kecamatan" id="changeKecamatanBtn"
             title="Kembali ke halaman pemilihan kecamatan">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
@@ -315,7 +312,7 @@
             </svg>
           </div>
           <div class="stat-content">
-            <span class="stat-label">Pembaruan Sinkron</span>
+            <span class="stat-label">Terakhir Sinkron</span>
             <span class="stat-value" id="metricLastSync">-</span>
           </div>
         </div>
