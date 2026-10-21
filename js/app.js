@@ -1441,7 +1441,7 @@ function exportKemenagExcel(kecamatanName) {
     }
 
     // Susun 2 baris judul resmi di atas tabel
-    const titleRow1 = [`DATA TEMPAT IBADAH KEMENTERIAN AGAMA (KEMENAG) REPUBLIK INDONESIA`];
+    const titleRow1 = [`DATA TEMPAT IBADAH KEMENTERIAN AGAMA (KEMENAG)`];
     const titleRow2 = [`WILAYAH KECAMATAN ${kec} - KABUPATEN GRESIK`];
     const emptyRow = [];
     const headerRow = [
@@ -1450,8 +1450,7 @@ function exportKemenagExcel(kecamatanName) {
       "Nama Tempat Ibadah",
       "Alamat / Dusun / Desa",
       "Kecamatan",
-      "Kabupaten",
-      "Sumber Data"
+      "Kabupaten"
     ];
 
     const dataRows = records.map((item, idx) => [
@@ -1460,8 +1459,7 @@ function exportKemenagExcel(kecamatanName) {
       cleanLeadingSpaces(item.nama || ""),
       cleanLeadingSpaces(item.alamat || ""),
       kec,
-      "Gresik",
-      "Kemenag RI"
+      "Gresik"
     ]);
 
     const aoa = [
@@ -1481,8 +1479,7 @@ function exportKemenagExcel(kecamatanName) {
       { wch: 38 },  // Nama
       { wch: 45 },  // Alamat
       { wch: 18 },  // Kecamatan
-      { wch: 14 },  // Kabupaten
-      { wch: 16 }   // Sumber Data
+      { wch: 14 }   // Kabupaten
     ];
 
     const wb = XLSX.utils.book_new();
