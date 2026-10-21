@@ -1058,7 +1058,7 @@ td.col-jenis {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 0.4rem 0 1.5rem 0;
+  margin: 0.4rem 0 0.85rem 0;
   gap: 0.25rem;
 }
 
@@ -1091,6 +1091,31 @@ td.col-jenis {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+/* Link Google Form Text Biasa */
+.hero-gform-plain {
+  margin: 0 0 1.25rem 0;
+  word-break: break-all;
+}
+
+.hero-gform-plain a {
+  color: var(--primary-600);
+  text-decoration: underline;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.hero-gform-plain a:hover {
+  color: var(--primary-700);
+}
+
+[data-theme="dark"] .hero-gform-plain a {
+  color: #34d399;
+}
+
+[data-theme="dark"] .hero-gform-plain a:hover {
+  color: #6ee7b7;
 }
 
 /* Landing Search & Counter Toolbar */
