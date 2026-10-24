@@ -1862,10 +1862,9 @@ function renderLandingChart(sortMode = null) {
   const dataList = [...state.kecamatanSummaryList];
   if (currentMode === "count") {
     dataList.sort((a, b) => b.total - a.total);
-  } else if (currentMode === "name") {
+  } else {
+    // Mode "name" dan mode "stacked" (Status Kelengkapan) mengurutkan alfabetis berdasarkan Nama Kecamatan (A-Z)
     dataList.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (currentMode === "stacked") {
-    dataList.sort((a, b) => b.total - a.total);
   }
 
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";
@@ -1936,7 +1935,7 @@ function renderLandingChart(sortMode = null) {
             color: textColor,
             font: {
               family: "'Inter', sans-serif",
-              size: 11,
+              size: 13,
               weight: 600
             },
             maxRotation: 45,
@@ -1954,7 +1953,7 @@ function renderLandingChart(sortMode = null) {
             color: textColor,
             font: {
               family: "'Inter', sans-serif",
-              size: 11
+              size: 13
             },
             precision: 0
           },
@@ -1971,7 +1970,7 @@ function renderLandingChart(sortMode = null) {
             font: {
               family: "'Inter', sans-serif",
               weight: 600,
-              size: 12
+              size: 15
             },
             usePointStyle: true,
             pointStyle: "circle"
@@ -1996,7 +1995,6 @@ function renderLandingChart(sortMode = null) {
               if (!item) return "";
               const pct = item.total > 0 ? Math.round((item.lengkap / item.total) * 100) : 0;
               return [
-                `Total Tempat Ibadah: ${item.total.toLocaleString("id-ID")} data`,
                 `Kelengkapan: ${item.lengkap.toLocaleString("id-ID")} Lengkap (${pct}%) • ${item.belum.toLocaleString("id-ID")} Belum`,
                 `Klik untuk membuka data kecamatan ini ↗`
               ];
@@ -2020,7 +2018,7 @@ function renderLandingChart(sortMode = null) {
         afterDatasetsDraw(chart) {
           const { ctx } = chart;
           ctx.save();
-          ctx.font = "600 11px 'Inter', sans-serif";
+          ctx.font = "600 19px 'Inter', sans-serif";
           ctx.textAlign = "center";
 
           if (currentMode === "stacked") {
