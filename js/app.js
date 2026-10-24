@@ -15,12 +15,14 @@ const STORAGE_KEY_TIME = "tempat_ibadah_cached_time";
 const state = {
   selectedKecamatan: null,       // null = Halaman Landing Pemilihan Kecamatan; string = Halaman Dashboard Kecamatan
   landingSearchQuery: "",        // Pencarian nama kecamatan di halaman landing
-  rawHeaders: [],                // Header mentah CSV
+  rawHeaders: [],                // Header tabel resmi (sampai keterangan dokumen kurang)
+  extraHeaders: [],              // Header berkas dokumen fisik tambahan (setelah keterangan dokumen kurang)
   rawRows: [],                   // Seluruh baris data se-Kabupaten Gresik
   kecamatanSummaryList: [],      // Rangkuman 18 kecamatan beserta total & breakdown jenis
   kecamatanAllRows: [],          // SELURUH data tempat ibadah pada kecamatan yang sedang dipilih (100% 1 kecamatan)
   kemenagAllRows: [],            // SELURUH data tempat ibadah Kemenag khusus kecamatan yang dipilih (untuk unduh)
   filteredRows: [],              // Data tempat ibadah hasil filter di layar (search/kategori/status)
+  chartSortMode: "name",        // Mode urutan grafik: 'name' (default A-Z), 'count', atau 'stacked'
   currentPage: 1,
   rowsPerPage: 25,
   sortColIndex: -1,
@@ -123,6 +125,9 @@ function toggleTheme() {
   document.documentElement.setAttribute("data-theme", newTheme);
   localStorage.setItem(STORAGE_KEY_THEME, newTheme);
   updateThemeIcon(newTheme);
+  if (typeof renderLandingChart === "function") {
+    renderLandingChart(state.chartSortMode);
+  }
 }
 
 function updateThemeIcon(theme) {
@@ -286,6 +291,112 @@ function initEventListeners() {
       window.location.reload();
     });
   }
+
+  // 12. Tombol Opsi Urutan Grafik di Landing Page
+  const btnChartCount = document.getElementById("chartSortCountBtn");
+  if (btnChartCount) {
+    btnChartCount.addEventListener("click", () => renderLandingChart("count"));
+  }
+
+  const btnChartName = document.getElementById("chartSortNameBtn");
+  if (btnChartName) {
+    btnChartName.addEventListener("click", () => renderLandingChart("name"));
+  }
+
+  const btnChartStacked = document.getElementById("chartModeStackedBtn");
+  if (btnChartStacked) {
+    btnChartStacked.addEventListener("click", () => renderLandingChart("stacked"));
+  }
+
+  // 13. Tombol Tutup Modal Dokumen & Listener Escape
+  const modalCloseBtn = document.getElementById("modalDocCloseBtn");
+  if (modalCloseBtn) {
+    modalCloseBtn.addEventListener("click", closeDocDetailModal);
+  }
+
+  const modalFooterCloseBtn = document.getElementById("modalDocFooterCloseBtn");
+  if (modalFooterCloseBtn) {
+    modalFooterCloseBtn.addEventListener("click", closeDocDetailModal);
+  }
+
+  const docModal = document.getElementById("docDetailModal");
+  if (docModal) {
+    docModal.addEventListener("click", (e) => {
+      if (e.target === docModal) {
+        closeDocDetailModal();
+      }
+    });
+  }
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeDocDetailModal();
+    }
+  });
+
+  let chartResizeTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(chartResizeTimer);
+    chartResizeTimer = setTimeout(() => {
+      if (window.innerWidth < 768) {
+        if (kecamatanChartInstance) {
+          kecamatanChartInstance.destroy();
+          kecamatanChartInstance = null;
+        }
+      } else {
+        const landingView = document.getElementById("landingView");
+        if (landingView && landingView.style.display !== "none" && !kecamatanChartInstance) {
+          renderLandingChart();
+        }
+      }
+    }, 150);
+
+    if (kecamatanChartInstance) {
+      kecamatanChartInstance.resize();
+    }
+    hideFloatingDocPopover(true);
+  });
+
+  // 14. Event delegation untuk Floating Hover Popover Kelengkapan Berkas (Anti-Tenggelam)
+  document.addEventListener("mouseover", (e) => {
+    const badgeBtn = e.target.closest(".badge-interactive");
+    if (badgeBtn) {
+      const rowIdx = parseInt(badgeBtn.getAttribute("data-row-idx"), 10);
+      if (!isNaN(rowIdx)) {
+        showFloatingDocPopover(badgeBtn, rowIdx);
+      }
+      return;
+    }
+
+    const floatingPopover = e.target.closest("#floatingKelengkapanPopover");
+    if (floatingPopover) {
+      clearTimeout(popoverHideTimeout);
+    }
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    const badgeBtn = e.target.closest(".badge-interactive");
+    const floatingPopover = e.target.closest("#floatingKelengkapanPopover");
+
+    if (badgeBtn) {
+      if (e.relatedTarget && (badgeBtn.contains(e.relatedTarget) || (e.relatedTarget.closest && e.relatedTarget.closest("#floatingKelengkapanPopover")))) {
+        return;
+      }
+      hideFloatingDocPopover(false);
+    } else if (floatingPopover) {
+      if (e.relatedTarget && (floatingPopover.contains(e.relatedTarget) || (e.relatedTarget.closest && e.relatedTarget.closest(".badge-interactive")))) {
+        return;
+      }
+      hideFloatingDocPopover(false);
+    }
+  });
+
+  // Sembunyikan popover seketika saat tabel atau layar di-scroll
+  const tableContainer = document.getElementById("tableContainer");
+  if (tableContainer) {
+    tableContainer.addEventListener("scroll", () => hideFloatingDocPopover(true), { passive: true });
+  }
+  window.addEventListener("scroll", () => hideFloatingDocPopover(true), { passive: true });
 }
 
 // ==========================================================================
@@ -435,24 +546,26 @@ function loadCSVToState(csvContent) {
   if (!parsed || parsed.length <= 1) return false;
 
   // Bersihkan semua spasi di depan kata/kalimat pada seluruh kolom dan baris
-  let headers = parsed[0].map(h => cleanLeadingSpaces(h).trim());
-  let rows = parsed.slice(1).map(row => row.map(cell => cleanLeadingSpaces(cell)));
+  const allHeaders = parsed[0].map(h => cleanLeadingSpaces(h).trim());
+  const allRows = parsed.slice(1).map(row => row.map(cell => cleanLeadingSpaces(cell)));
 
-  // Cukup tampilkan data sampai kolom "Keterangan Dokumen Kurang" saja, sisanya tidak usah
-  const lastColIdx = headers.findIndex(h => {
+  // Cukup tampilkan data sampai kolom "Keterangan Dokumen Kurang" saja di tabel resmi
+  const lastColIdx = allHeaders.findIndex(h => {
     const formatted = formatColumnHeader(h);
     return formatted === "Keterangan Dokumen Kurang" ||
       /jika belum lengkap|dokumen.*kurang|keterangan.*dokumen/i.test(h);
   });
 
   if (lastColIdx !== -1) {
-    const maxCols = lastColIdx + 1;
-    headers = headers.slice(0, maxCols);
-    rows = rows.map(r => r.slice(0, maxCols));
+    state.rawHeaders = allHeaders.slice(0, lastColIdx + 1);
+    state.extraHeaders = allHeaders.slice(lastColIdx + 1);
+  } else {
+    state.rawHeaders = allHeaders;
+    state.extraHeaders = [];
   }
 
-  state.rawHeaders = headers;
-  state.rawRows = rows;
+  // Simpan data lengkap baris agar kolom berkas fisik dapat diakses di popup/hover badge
+  state.rawRows = allRows;
 
   detectKeyColumns();
   computeKecamatanSummaries();
@@ -464,6 +577,7 @@ function loadCSVToState(csvContent) {
   }
 
   renderLandingKecamatan();
+  renderLandingChart(state.chartSortMode);
 
   // Jika user sudah berada di dashboard kecamatan tertentu, refresh datanya
   if (state.selectedKecamatan) {
@@ -802,9 +916,6 @@ function selectKecamatan(kecamatanName) {
   const kemenagDownloadBadge = document.getElementById("kemenagDownloadBadge");
   if (kemenagDownloadBadge) kemenagDownloadBadge.textContent = `${kemenagCount.toLocaleString("id-ID")} Data`;
 
-  const dashboardKemenagPillText = document.getElementById("dashboardKemenagPillText");
-  if (dashboardKemenagPillText) dashboardKemenagPillText.textContent = `${kemenagCount.toLocaleString("id-ID")} Data Kemenag`;
-
   // 5. Update dropdown kategori hanya untuk jenis yang ada di kecamatan terpilih
   populateCategoryDropdownForSelectedKecamatan();
 
@@ -834,8 +945,9 @@ function showLandingPage() {
   if (dashboardView) dashboardView.style.display = "none";
   if (landingView) landingView.style.display = "flex";
 
-  // Re-render kartu kecamatan jika ada update
+  // Re-render kartu kecamatan & grafik jika ada update
   renderLandingKecamatan();
+  renderLandingChart(state.chartSortMode);
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -1073,7 +1185,14 @@ function renderTable() {
       if (colIdx === state.jenisColIdx) {
         td.className = "col-jenis";
       }
-      td.innerHTML = formatCellValue(row[colIdx], colName);
+
+      if (colIdx === state.statusColIdx) {
+        td.className = "col-status";
+        td.innerHTML = renderKelengkapanBadge(row, startIdx + rowIdx);
+      } else {
+        td.innerHTML = formatCellValue(row[colIdx], colName);
+      }
+
       tr.appendChild(td);
     });
 
@@ -1159,9 +1278,9 @@ function formatColumnHeader(colName) {
   const clean = colName.trim();
   const lower = clean.toLowerCase();
 
-  // 1. Kolom "Timestamp" diganti "Waktu Pendataan"
+  // 1. Kolom "Timestamp" diganti "Waktu "
   if (/timestamp/i.test(lower)) {
-    return "Waktu Pendataan";
+    return "Waktu ";
   }
 
   // 2. Kolom "Email Address" atau "Email" diganti "Alamat Email"
@@ -1312,9 +1431,15 @@ function updateBannerMetrics() {
   const metricFiltered = document.getElementById("metricFiltered");
   const metricLastSync = document.getElementById("metricLastSync");
   const metricKemenag = document.getElementById("metricKemenagTotal");
+  const metricLengkapCount = document.getElementById("metricLengkapCount");
+  const metricBelumCount = document.getElementById("metricBelumCount");
+  const metricLengkapPct = document.getElementById("metricLengkapPct");
+  const metricBelumPct = document.getElementById("metricBelumPct");
+
+  const total = state.kecamatanAllRows.length;
 
   if (metricTotal) {
-    metricTotal.textContent = state.kecamatanAllRows.length.toLocaleString("id-ID");
+    metricTotal.textContent = total.toLocaleString("id-ID");
   }
 
   if (metricKemenag) {
@@ -1328,6 +1453,628 @@ function updateBannerMetrics() {
   if (metricLastSync && state.lastUpdated) {
     metricLastSync.textContent = formatTimeWIB(state.lastUpdated);
   }
+
+  // Hitung Total dan Persentase Kelengkapan Berkas Kecamatan Ini
+  let lengkapCount = 0;
+  let belumCount = 0;
+
+  if (state.statusColIdx !== -1 && total > 0) {
+    state.kecamatanAllRows.forEach(row => {
+      const statusVal = (row[state.statusColIdx] || "").trim().toLowerCase();
+      if (statusVal.includes("sudah lengkap")) {
+        lengkapCount++;
+      } else {
+        belumCount++;
+      }
+    });
+  }
+
+  const pctLengkap = total > 0 ? ((lengkapCount / total) * 100).toFixed(1) : "0";
+  const pctBelum = total > 0 ? ((belumCount / total) * 100).toFixed(1) : "0";
+
+  // Update 4 Kotak Kelengkapan Berkas
+  if (metricLengkapCount) {
+    metricLengkapCount.textContent = lengkapCount.toLocaleString("id-ID");
+  }
+
+  if (metricBelumCount) {
+    metricBelumCount.textContent = belumCount.toLocaleString("id-ID");
+  }
+
+  if (metricLengkapPct) {
+    metricLengkapPct.textContent = `${pctLengkap}%`;
+  }
+
+  if (metricBelumPct) {
+    metricBelumPct.textContent = `${pctBelum}%`;
+  }
+}
+
+// ==========================================================================
+// RENDER BADGE KELENGKAPAN BERKAS & HOVER COMMENT POPOVER
+// ==========================================================================
+let popoverHideTimeout = null;
+
+function renderKelengkapanBadge(row, globalRowIdx) {
+  const statusVal = cleanLeadingSpaces(row[state.statusColIdx] || "").trim();
+  const lowerVal = statusVal.toLowerCase();
+  const isLengkap = lowerVal.includes("sudah lengkap");
+  const isBelum = lowerVal.includes("belum lengkap");
+
+  if (!isLengkap && !isBelum && !statusVal) {
+    return `<span style="color:var(--text-light);">-</span>`;
+  }
+
+  const badgeClass = isLengkap ? "badge-lengkap" : (isBelum ? "badge-belum" : "badge-lembaga");
+  const labelText = isLengkap ? "✓ Sudah Lengkap" : (isBelum ? "⚠ Belum Lengkap" : escapeHTML(statusVal));
+
+  return `
+    <div class="kelengkapan-cell-wrap">
+      <button type="button" class="table-badge ${badgeClass} badge-interactive" 
+        data-row-idx="${globalRowIdx}"
+        onclick="openDocDetailModal(${globalRowIdx})" 
+        title="Klik untuk membuka rincian berkas">
+        <span>${labelText}</span>
+        <span class="badge-icon-cue" title="Lihat detail berkas">ℹ️</span>
+      </button>
+    </div>
+  `;
+}
+
+function buildKelengkapanPopoverContent(row) {
+  const statusVal = cleanLeadingSpaces(row[state.statusColIdx] || "").trim();
+  const lowerVal = statusVal.toLowerCase();
+  const isLengkap = lowerVal.includes("sudah lengkap");
+
+  // Ambil catatan alasan kekurangan dokumen (kolom keterangan dokumen kurang)
+  let ketKurang = "";
+  const ketColIdx = state.rawHeaders.findIndex(h => /jika belum lengkap|dokumen.*kurang|keterangan.*dokumen/i.test(h));
+  if (ketColIdx !== -1 && row[ketColIdx]) {
+    ketKurang = cleanLeadingSpaces(row[ketColIdx]).trim();
+  }
+  const hasKetKurang = Boolean(ketKurang && ketKurang !== "-" && !/^(tidak ada|nihil|lengkap|-)$/i.test(ketKurang));
+
+  // Siapkan daftar dokumen tambahan (dari API setelah keterangan dokumen kurang)
+  let docItemsHtml = "";
+  if (state.extraHeaders && state.extraHeaders.length > 0) {
+    const extraStartIdx = state.rawHeaders.length;
+    docItemsHtml = state.extraHeaders.map((header, i) => {
+      const val = cleanLeadingSpaces(row[extraStartIdx + i] || "").trim();
+      const icon = getDocIconByHeader(header);
+      const shortTitle = getShortDocTitle(header);
+
+      let statusClass = "other";
+      let statusText = val || "-";
+      if (!val) {
+        statusClass = "tidak";
+        statusText = "Belum";
+      } else if (/^ada$/i.test(val) || /^lengkap$/i.test(val)) {
+        statusClass = "ada";
+        statusText = "✓ Ada";
+      } else if (/^tidak/i.test(val) || /^belum/i.test(val)) {
+        statusClass = "tidak";
+        statusText = "✗ Tidak";
+      } else if (/^https?:\/\//i.test(val)) {
+        statusClass = "link";
+        statusText = "🔗 Tautan";
+      } else if (val.length > 15) {
+        statusText = val.substring(0, 14) + "…";
+      }
+
+      return `
+        <li class="popover-doc-item">
+          <span class="popover-doc-name" title="${escapeHTML(header)}">
+            <span>${icon}</span>
+            <span>${escapeHTML(shortTitle)}</span>
+          </span>
+          <span class="popover-doc-status ${statusClass}">${escapeHTML(statusText)}</span>
+        </li>
+      `;
+    }).join("");
+  } else {
+    docItemsHtml = `
+      <li class="popover-doc-item" style="color:var(--text-muted); font-style:italic;">
+        Rincian berkas online dapat dilihat saat sinkronisasi aktif.
+      </li>
+    `;
+  }
+
+  return `
+    <div class="popover-header">
+      <span class="popover-badge-pill ${isLengkap ? 'lengkap' : 'belum'}">
+        ${isLengkap ? '✓ Lengkap' : '⚠ Belum Lengkap'}
+      </span>
+      <span class="popover-sub">Rincian Dokumen</span>
+    </div>
+    ${hasKetKurang ? `<div class="popover-note"><strong>Catatan Kurang:</strong> ${escapeHTML(ketKurang)}</div>` : ''}
+    <ul class="popover-doc-list">
+      ${docItemsHtml}
+    </ul>
+    <div class="popover-footer">
+      <span>Klik badge untuk rincian lengkap ↗</span>
+    </div>
+  `;
+}
+
+function showFloatingDocPopover(badgeBtn, rowIdx) {
+  const floatingPopover = document.getElementById("floatingKelengkapanPopover");
+  const popoverContent = document.getElementById("popoverContent");
+  const popoverArrow = document.getElementById("popoverArrow");
+  if (!floatingPopover || !popoverContent) return;
+
+  const row = state.filteredRows[rowIdx];
+  if (!row) return;
+
+  clearTimeout(popoverHideTimeout);
+
+  popoverContent.innerHTML = buildKelengkapanPopoverContent(row);
+
+  floatingPopover.style.display = "block";
+  floatingPopover.style.visibility = "hidden";
+  floatingPopover.style.opacity = "0";
+
+  const rect = badgeBtn.getBoundingClientRect();
+  const popHeight = floatingPopover.offsetHeight || 250;
+  const popWidth = floatingPopover.offsetWidth || 295;
+
+  const spaceAbove = rect.top;
+  const spaceBelow = window.innerHeight - rect.bottom;
+
+  // Jika ruang di atas sempit (seperti baris 1-3 di dekat sticky header),
+  // otomatis buka ke BAWAH agar TIDAK TENGGELAM!
+  let isTop = true;
+  if (spaceAbove < popHeight + 15) {
+    isTop = false;
+  } else if (spaceBelow < popHeight + 15 && spaceAbove >= popHeight + 15) {
+    isTop = true;
+  }
+
+  let top = isTop ? (rect.top - popHeight - 8) : (rect.bottom + 8);
+
+  let left = rect.left + (rect.width / 2) - (popWidth / 2);
+  const minLeft = 10;
+  const maxLeft = window.innerWidth - popWidth - 10;
+  left = Math.max(minLeft, Math.min(left, maxLeft));
+
+  if (popoverArrow) {
+    const badgeCenter = rect.left + (rect.width / 2);
+    let arrowOffset = badgeCenter - left - 5;
+    arrowOffset = Math.max(14, Math.min(arrowOffset, popWidth - 24));
+    popoverArrow.style.left = `${arrowOffset}px`;
+  }
+
+  floatingPopover.style.top = `${top}px`;
+  floatingPopover.style.left = `${left}px`;
+  floatingPopover.className = `kelengkapan-popover kelengkapan-popover-portal ${isTop ? 'placement-top' : 'placement-bottom'} visible`;
+  floatingPopover.style.visibility = "visible";
+  floatingPopover.style.opacity = "1";
+}
+
+function hideFloatingDocPopover(immediate = false) {
+  const floatingPopover = document.getElementById("floatingKelengkapanPopover");
+  if (!floatingPopover) return;
+
+  if (immediate) {
+    clearTimeout(popoverHideTimeout);
+    floatingPopover.classList.remove("visible");
+    floatingPopover.style.display = "none";
+    return;
+  }
+
+  clearTimeout(popoverHideTimeout);
+  popoverHideTimeout = setTimeout(() => {
+    floatingPopover.classList.remove("visible");
+    setTimeout(() => {
+      if (!floatingPopover.classList.contains("visible")) {
+        floatingPopover.style.display = "none";
+      }
+    }, 160);
+  }, 120);
+}
+
+function getDocIconByHeader(header) {
+  const h = (header || "").toLowerCase();
+  if (/struktur/i.test(h)) return "📋";
+  if (/ktp/i.test(h)) return "🪪";
+  if (/tanah|sertifikat/i.test(h)) return "📜";
+  if (/fisik|bangunan/i.test(h)) return "🏛️";
+  if (/legalitas|izin/i.test(h)) return "⚖️";
+  if (/kemenkumham/i.test(h)) return "🏢";
+  if (/pbg|imb/i.test(h)) return "🏗️";
+  return "📄";
+}
+
+function getShortDocTitle(header) {
+  const h = (header || "").trim();
+  const lower = h.toLowerCase();
+  if (/struktur/i.test(lower)) return "Struktur Organisasi";
+  if (/ktp/i.test(lower)) return "Foto KTP Pengurus";
+  if (/sertifikat/i.test(lower)) return "Sertifikat Tanah";
+  if (/fisik/i.test(lower)) return "Foto Bangunan";
+  if (/legalitas/i.test(lower)) return "Legalitas Ibadah";
+  if (/kemenkumham/i.test(lower)) return "SK Kemenkumham";
+  if (/pbg|imb/i.test(lower)) return "SK PBG / IMB";
+  return h;
+}
+
+// ==========================================================================
+// POPUP MODAL RINCIAN DOKUMEN & KELENGKAPAN BERKAS
+// ==========================================================================
+window.openDocDetailModal = function (globalRowIdx) {
+  hideFloatingDocPopover(true);
+  const modal = document.getElementById("docDetailModal");
+  const modalTitle = document.getElementById("modalDocTitle");
+  const modalSubtitle = document.getElementById("modalDocSubtitle");
+  const modalBody = document.getElementById("modalDocBody");
+
+  if (!modal || !modalBody) return;
+
+  const row = state.filteredRows[globalRowIdx];
+  if (!row) return;
+
+  const namaTempat = row[3] || "Tempat Ibadah";
+  const jenis = row[state.jenisColIdx] || "Tempat Ibadah";
+  const kec = row[state.kecamatanColIdx] || state.selectedKecamatan || "";
+  const desa = row[5] || "";
+  const alamat = row[6] || "";
+  const pengurus = row[7] || "";
+  const statusVal = row[state.statusColIdx] || "";
+  const isLengkap = statusVal.toLowerCase().includes("sudah lengkap");
+  const isBelum = statusVal.toLowerCase().includes("belum lengkap");
+
+  // Keterangan dokumen kurang
+  const ketColIdx = state.rawHeaders.findIndex(h => /jika belum lengkap|dokumen.*kurang|keterangan.*dokumen/i.test(h));
+  const ketKurang = (ketColIdx !== -1 && row[ketColIdx]) ? cleanLeadingSpaces(row[ketColIdx]).trim() : "";
+  const hasKetKurang = Boolean(ketKurang && ketKurang !== "-" && !/^(tidak ada|nihil|lengkap|-)$/i.test(ketKurang));
+
+  if (modalTitle) modalTitle.textContent = namaTempat;
+  if (modalSubtitle) modalSubtitle.textContent = `${jenis} • Ds. ${desa}, Kec. ${kec}`;
+
+  let docCardsHtml = "";
+  if (state.extraHeaders && state.extraHeaders.length > 0) {
+    const extraStartIdx = state.rawHeaders.length;
+    docCardsHtml = state.extraHeaders.map((header, i) => {
+      const val = cleanLeadingSpaces(row[extraStartIdx + i] || "").trim();
+      const icon = getDocIconByHeader(header);
+      const title = getShortDocTitle(header);
+
+      let badgeHtml = "";
+      if (!val) {
+        badgeHtml = `<span class="doc-badge-pill tidak">✗ Belum Ada</span>`;
+      } else if (/^ada$/i.test(val) || /^lengkap$/i.test(val)) {
+        badgeHtml = `<span class="doc-badge-pill ada">✓ Ada / Terlampir</span>`;
+      } else if (/^tidak/i.test(val) || /^belum/i.test(val)) {
+        badgeHtml = `<span class="doc-badge-pill tidak">✗ Belum Ada</span>`;
+      } else if (/^https?:\/\//i.test(val)) {
+        badgeHtml = `
+          <a href="${escapeHTML(val)}" target="_blank" rel="noopener noreferrer" class="doc-badge-pill link-btn">
+            <span>Buka Berkas</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          </a>
+        `;
+      } else {
+        badgeHtml = `<span class="doc-badge-pill other">${escapeHTML(val)}</span>`;
+      }
+
+      return `
+        <div class="doc-item-card">
+          <div class="doc-item-left">
+            <span class="doc-item-icon">${icon}</span>
+            <span class="doc-item-title" title="${escapeHTML(header)}">${escapeHTML(title)}</span>
+          </div>
+          <div>${badgeHtml}</div>
+        </div>
+      `;
+    }).join("");
+  } else {
+    docCardsHtml = `
+      <div style="grid-column: 1 / -1; padding: 1.25rem; text-align: center; color: var(--text-muted); background: var(--bg-subtle); border-radius: var(--radius-md); font-size: 0.85rem;">
+        Rincian 7 berkas fisik (Struktur Organisasi, KTP Pengurus, Sertifikat Tanah, dsb.) akan otomatis dimuat dari API online Google Form saat sinkronisasi aktif.
+      </div>
+    `;
+  }
+
+  modalBody.innerHTML = `
+    <!-- Ringkasan Tempat Ibadah -->
+    <div class="doc-place-card">
+      <div class="doc-place-top">
+        <span class="doc-place-name">${escapeHTML(namaTempat)}</span>
+        <span class="table-badge ${isLengkap ? 'badge-lengkap' : (isBelum ? 'badge-belum' : 'badge-lembaga')}">
+          ${isLengkap ? '✓ Sudah Lengkap' : (isBelum ? '⚠ Belum Lengkap' : escapeHTML(statusVal || '-'))}
+        </span>
+      </div>
+      <div class="doc-place-meta">
+        <span>📍 <strong>Alamat:</strong> ${escapeHTML(alamat || desa || '-')}</span>
+        <span>👤 <strong>Pengurus:</strong> ${escapeHTML(pengurus || '-')}</span>
+      </div>
+    </div>
+
+    <!-- Catatan Dokumen Kurang (Hanya muncul jika ada catatan kekurangan) -->
+    ${hasKetKurang ? `
+    <div class="doc-note-box warning">
+      <div style="font-size: 1.15rem; flex-shrink: 0;">⚠</div>
+      <div>
+        <div style="font-weight: 700; margin-bottom: 0.2rem;">
+          Catatan Kekurangan Dokumen:
+        </div>
+        <div style="word-break: break-word;">
+          ${escapeHTML(ketKurang)}
+        </div>
+      </div>
+    </div>
+    ` : ''}
+
+    <!-- Rincian Berkas Verifikasi Kesra -->
+    <div>
+      <div class="doc-section-title">Rincian Status Berkas Fisik (${state.extraHeaders.length || 7} Dokumen)</div>
+      <div class="doc-items-grid">
+        ${docCardsHtml}
+      </div>
+    </div>
+  `;
+
+  modal.style.display = "flex";
+  document.body.style.overflow = "hidden";
+};
+
+window.closeDocDetailModal = function () {
+  const modal = document.getElementById("docDetailModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+  document.body.style.overflow = "";
+};
+
+// ==========================================================================
+// VISUALISASI GRAFIK 18 KECAMATAN PADA LANDING PAGE (CHART.JS)
+// ==========================================================================
+let kecamatanChartInstance = null;
+
+function renderLandingChart(sortMode = null) {
+  if (sortMode) {
+    state.chartSortMode = sortMode;
+  }
+  const currentMode = state.chartSortMode || "name";
+
+  // Update active state pada tombol kontrol grafik
+  const btnCount = document.getElementById("chartSortCountBtn");
+  const btnName = document.getElementById("chartSortNameBtn");
+  const btnStacked = document.getElementById("chartModeStackedBtn");
+
+  if (btnCount) btnCount.classList.toggle("active", currentMode === "count");
+  if (btnName) btnName.classList.toggle("active", currentMode === "name");
+  if (btnStacked) btnStacked.classList.toggle("active", currentMode === "stacked");
+
+  const canvas = document.getElementById("kecamatanBarChart");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  // Jika di layar HP (< 768px), grafik tidak di-render agar nama kecamatan tidak terpotong
+  if (window.innerWidth < 768) {
+    if (kecamatanChartInstance) {
+      kecamatanChartInstance.destroy();
+      kecamatanChartInstance = null;
+    }
+    return;
+  }
+
+  if (!state.kecamatanSummaryList || state.kecamatanSummaryList.length === 0) return;
+
+  const dataList = [...state.kecamatanSummaryList];
+  if (currentMode === "count") {
+    dataList.sort((a, b) => b.total - a.total);
+  } else if (currentMode === "name") {
+    dataList.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (currentMode === "stacked") {
+    dataList.sort((a, b) => b.total - a.total);
+  }
+
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const textColor = isDark ? "#cbd5e1" : "#475569";
+  const gridColor = isDark ? "rgba(255, 255, 255, 0.07)" : "rgba(0, 0, 0, 0.06)";
+
+  const labels = dataList.map(item => item.name);
+  const totalCounts = dataList.map(item => item.total);
+  const lengkapCounts = dataList.map(item => item.lengkap);
+  const belumCounts = dataList.map(item => Math.max(0, item.total - item.lengkap));
+
+  if (kecamatanChartInstance) {
+    kecamatanChartInstance.destroy();
+  }
+
+  let datasets = [];
+  if (currentMode === "stacked") {
+    datasets = [
+      {
+        label: "Sudah Lengkap",
+        data: lengkapCounts,
+        backgroundColor: "#10b981",
+        borderColor: "#059669",
+        borderWidth: 1,
+        borderRadius: 4
+      },
+      {
+        label: "Belum Lengkap",
+        data: belumCounts,
+        backgroundColor: "#f59e0b",
+        borderColor: "#d97706",
+        borderWidth: 1,
+        borderRadius: 4
+      }
+    ];
+  } else {
+    datasets = [
+      {
+        label: "Total Tempat Ibadah",
+        data: totalCounts,
+        backgroundColor: isDark ? "rgba(16, 185, 129, 0.85)" : "rgba(5, 150, 105, 0.85)",
+        hoverBackgroundColor: isDark ? "#34d399" : "#047857",
+        borderColor: isDark ? "#34d399" : "#059669",
+        borderWidth: 1.2,
+        borderRadius: 6
+      }
+    ];
+  }
+
+  kecamatanChartInstance = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: "index",
+        intersect: false
+      },
+      scales: {
+        x: {
+          stacked: currentMode === "stacked",
+          ticks: {
+            autoSkip: false, // Menjamin seluruh 18 nama kecamatan selalu muncul tanpa terpotong
+            color: textColor,
+            font: {
+              family: "'Inter', sans-serif",
+              size: 11,
+              weight: 600
+            },
+            maxRotation: 45,
+            minRotation: 25
+          },
+          grid: {
+            display: false
+          }
+        },
+        y: {
+          stacked: currentMode === "stacked",
+          beginAtZero: true,
+          grace: "8%",
+          ticks: {
+            color: textColor,
+            font: {
+              family: "'Inter', sans-serif",
+              size: 11
+            },
+            precision: 0
+          },
+          grid: {
+            color: gridColor
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: currentMode === "stacked",
+          labels: {
+            color: textColor,
+            font: {
+              family: "'Inter', sans-serif",
+              weight: 600,
+              size: 12
+            },
+            usePointStyle: true,
+            pointStyle: "circle"
+          }
+        },
+        tooltip: {
+          backgroundColor: isDark ? "rgba(15, 23, 42, 0.95)" : "rgba(255, 255, 255, 0.98)",
+          titleColor: isDark ? "#f8fafc" : "#0f172a",
+          bodyColor: isDark ? "#cbd5e1" : "#334155",
+          borderColor: isDark ? "#334155" : "#e2e8f0",
+          borderWidth: 1,
+          padding: 12,
+          boxPadding: 6,
+          usePointStyle: true,
+          callbacks: {
+            title: function (context) {
+              return `KECAMATAN ${context[0].label}`;
+            },
+            afterBody: function (context) {
+              const idx = context[0].dataIndex;
+              const item = dataList[idx];
+              if (!item) return "";
+              const pct = item.total > 0 ? Math.round((item.lengkap / item.total) * 100) : 0;
+              return [
+                `Total Tempat Ibadah: ${item.total.toLocaleString("id-ID")} data`,
+                `Kelengkapan: ${item.lengkap.toLocaleString("id-ID")} Lengkap (${pct}%) • ${item.belum.toLocaleString("id-ID")} Belum`,
+                `Klik untuk membuka data kecamatan ini ↗`
+              ];
+            }
+          }
+        }
+      },
+      onClick: function (evt, elements) {
+        if (elements && elements.length > 0) {
+          const index = elements[0].index;
+          const kecName = labels[index];
+          if (kecName) {
+            selectKecamatan(kecName);
+          }
+        }
+      }
+    },
+    plugins: [
+      {
+        id: "barValueLabels",
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          ctx.save();
+          ctx.font = "600 11px 'Inter', sans-serif";
+          ctx.textAlign = "center";
+
+          if (currentMode === "stacked") {
+            const meta0 = chart.getDatasetMeta(0);
+            const meta1 = chart.getDatasetMeta(1);
+
+            if (meta0 && meta0.data) {
+              meta0.data.forEach((element0, i) => {
+                const element1 = meta1 && meta1.data ? meta1.data[i] : null;
+                const val0 = lengkapCounts[i] || 0;
+                const val1 = belumCounts[i] || 0;
+                const totalVal = totalCounts[i] || 0;
+
+                // Total di puncak batang stacked
+                const topY = element1 ? Math.min(element0.y, element1.y) : element0.y;
+                ctx.fillStyle = isDark ? "#f1f5f9" : "#0f172a";
+                ctx.textBaseline = "bottom";
+                ctx.fillText(totalVal.toLocaleString("id-ID"), element0.x, topY - 3);
+
+                // Angka dalam segmen Lengkap (Hijau) jika tingginya memadai
+                if (element0.base && Math.abs(element0.base - element0.y) >= 14 && val0 > 0) {
+                  ctx.fillStyle = "#ffffff";
+                  ctx.textBaseline = "middle";
+                  ctx.fillText(val0.toLocaleString("id-ID"), element0.x, (element0.y + element0.base) / 2);
+                }
+
+                // Angka dalam segmen Belum Lengkap (Kuning/Amber) jika tingginya memadai
+                if (element1 && element1.base && Math.abs(element1.base - element1.y) >= 14 && val1 > 0) {
+                  ctx.fillStyle = "#ffffff";
+                  ctx.textBaseline = "middle";
+                  ctx.fillText(val1.toLocaleString("id-ID"), element1.x, (element1.y + element1.base) / 2);
+                }
+              });
+            }
+          } else {
+            // Mode Urut Nama (A-Z) atau Terbanyak: Tampilkan angka langsung di atas setiap batang
+            const meta = chart.getDatasetMeta(0);
+            if (meta && meta.data) {
+              meta.data.forEach((element, i) => {
+                const val = totalCounts[i];
+                if (val !== undefined && val !== null) {
+                  ctx.fillStyle = isDark ? "#f1f5f9" : "#0f172a";
+                  ctx.textBaseline = "bottom";
+                  ctx.fillText(val.toLocaleString("id-ID"), element.x, element.y - 3);
+                }
+              });
+            }
+          }
+
+          ctx.restore();
+        }
+      }
+    ]
+  });
 }
 
 function updateStatus(status, label) {

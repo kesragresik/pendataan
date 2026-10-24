@@ -12,17 +12,26 @@ Dapat langsung dibuka cukup dengan **klik ganda (double-click)** pada file [`ind
 ### A. Landing Gateway (Pilih Kecamatan Terlebih Dahulu)
 1. **Mandatory Selection:** Saat membuka web, pengguna langsung disajikan tampilan pemilihan 18 kecamatan di Kabupaten Gresik. Akses ke tabel data dikunci hingga pengguna memilih salah satu kecamatan.
 2. **Pencarian Cepat Kecamatan:** Ketik nama kecamatan (misal: *Kebomas*, *Manyar*, *Sangkapura*, *Driyorejo*) pada kolom pencarian di bagian atas untuk menyaring kartu wilayah seketika.
-3. **Kartu Statistik Interaktif Tiap Kecamatan:**
+3. **Grafik Interaktif 18 Wilayah Kecamatan (Chart.js):**
+   - Visualisasi perbandingan jumlah tempat ibadah se-Kabupaten Gresik.
+   - Tombol urutan fleksibel: **Terbanyak**, **Nama (A-Z)**, dan **Status Kelengkapan** (*stacked bar* berkas lengkap vs belum lengkap).
+   - Interaktif: Klik batang grafik wilayah mana saja untuk langsung masuk ke dashboard kecamatan tersebut.
+4. **Kartu Statistik Interaktif Tiap Kecamatan:**
    - Total jumlah tempat ibadah di kecamatan tersebut.
    - Breakdown jenis tempat ibadah (🕌 Masjid, 🕋 Mushollah, ⛪ Gereja, 🛕 Pura, 📖 TPQ/Lembaga).
    - Indikator persentase kelengkapan dokumen data (*Sudah Lengkap* vs *Belum Lengkap*).
-4. **Masuk ke Wilayah:** Klik kartu kecamatan untuk langsung membuka dashboard data wilayah tersebut.
+5. **Masuk ke Wilayah:** Klik kartu kecamatan untuk langsung membuka dashboard data wilayah tersebut.
 
 ### B. Dashboard Tabel Wilayah Kecamatan
 1. **Header Kecamatan Aktif & Tombol "Ganti Kecamatan":**
-   - Di bagian atas dashboard terdapat badge wilayah aktif (misal: `📍 KEC. KEBOMAS`).
+   - Di bagian atas dashboard terdapat badge wilayah aktif (misal: `📍 KEC. KEBOMAS`) dan pill persentase kelengkapan berkas.
    - Terdapat tombol **"🔄 Ganti Kecamatan"** untuk kembali ke halaman daftar 18 kecamatan kapan saja.
-2. **Filter & Pencarian Khusus Wilayah:**
+2. **Kartu Metrik Kelengkapan Berkas Khusus Kecamatan:**
+   - Menampilkan persentase kelengkapan berkas (`XX.X%`) dan rincian total data lengkap vs belum lengkap, disertai indikator bar kemajuan (*progress bar*).
+3. **Badge Kelengkapan Interaktif (Hover Popover & Popup Modal Rincian Dokumen):**
+   - **Hover Popover (Comment Bubble):** Mengarahkan kursor ke badge kelengkapan di tabel memunculkan popover melayang dengan ringkasan status 7 berkas fisik dan catatan kekurangan dokumen.
+   - **Click Popup Modal:** Mengklik badge kelengkapan membuka modal dialog rincian lengkap untuk tempat ibadah tersebut, mencakup catatan kekurangan dan status verifikasi 7 dokumen formulir Kesra (*Struktur Organisasi, KTP Pengurus, Sertifikat Tanah, Foto Fisik Bangunan, Dokumen Legalitas, SK Kemenkumham, SK PBG/IMB* serta tautan Google Drive).
+4. **Filter & Pencarian Khusus Wilayah:**
    - **Pencarian Bebas:** Menyaring nama tempat ibadah, desa, alamat, atau nama pengurus di kecamatan tersebut.
    - **Filter Jenis:** Hanya menampilkan opsi jenis tempat ibadah yang tersedia di wilayah kecamatan terpilih.
    - **Filter Status Kelengkapan:** Saring berdasarkan *Sudah Lengkap* atau *Belum Lengkap*.
