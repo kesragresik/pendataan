@@ -435,8 +435,24 @@ function loadCSVToState(csvContent) {
   if (!parsed || parsed.length <= 1) return false;
 
   // Bersihkan semua spasi di depan kata/kalimat pada seluruh kolom dan baris
-  state.rawHeaders = parsed[0].map(h => cleanLeadingSpaces(h).trim());
-  state.rawRows = parsed.slice(1).map(row => row.map(cell => cleanLeadingSpaces(cell)));
+  let headers = parsed[0].map(h => cleanLeadingSpaces(h).trim());
+  let rows = parsed.slice(1).map(row => row.map(cell => cleanLeadingSpaces(cell)));
+
+  // Cukup tampilkan data sampai kolom "Keterangan Dokumen Kurang" saja, sisanya tidak usah
+  const lastColIdx = headers.findIndex(h => {
+    const formatted = formatColumnHeader(h);
+    return formatted === "Keterangan Dokumen Kurang" ||
+      /jika belum lengkap|dokumen.*kurang|keterangan.*dokumen/i.test(h);
+  });
+
+  if (lastColIdx !== -1) {
+    const maxCols = lastColIdx + 1;
+    headers = headers.slice(0, maxCols);
+    rows = rows.map(r => r.slice(0, maxCols));
+  }
+
+  state.rawHeaders = headers;
+  state.rawRows = rows;
 
   detectKeyColumns();
   computeKecamatanSummaries();
@@ -1052,12 +1068,12 @@ function renderTable() {
     tdNo.textContent = startIdx + rowIdx + 1;
     tr.appendChild(tdNo);
 
-    row.forEach((cellValue, colIdx) => {
+    state.rawHeaders.forEach((colName, colIdx) => {
       const td = document.createElement("td");
       if (colIdx === state.jenisColIdx) {
         td.className = "col-jenis";
       }
-      td.innerHTML = formatCellValue(cellValue, state.rawHeaders[colIdx]);
+      td.innerHTML = formatCellValue(row[colIdx], colName);
       tr.appendChild(td);
     });
 
@@ -1189,7 +1205,7 @@ function formatColumnHeader(colName) {
   }
 
   // 10. Kolom alasan kekurangan dokumen -> "Keterangan Dokumen Kurang"
-  if (/jika belum lengkap/i.test(lower)) {
+  if (/jika belum lengkap|dokumen.*kurang|keterangan.*dokumen/i.test(lower)) {
     return "Keterangan Dokumen Kurang";
   }
 
@@ -1383,7 +1399,7 @@ function exportToExcel() {
     const emptyRow = [];
     const exportHeaders = ["No", ...state.rawHeaders.map(formatColumnHeader)];
     const exportRows = dataToExport.map((row, idx) => {
-      const formattedCells = row.map(cell => cleanLeadingSpaces(cell || ""));
+      const formattedCells = state.rawHeaders.map((_, colIdx) => cleanLeadingSpaces(row[colIdx] || ""));
       return [idx + 1, ...formattedCells];
     });
     const exportData = [titleRow1, titleRow2, emptyRow, exportHeaders, ...exportRows];
@@ -1563,7 +1579,7 @@ function exportToPDF() {
     // Header tabel (Bahasa Indonesia)
     const exportHeaders = ["No", ...state.rawHeaders.map(formatColumnHeader)];
     const exportRows = dataToExport.map((row, idx) => {
-      const formattedCells = row.map(c => cleanLeadingSpaces(c || "-"));
+      const formattedCells = state.rawHeaders.map((_, colIdx) => cleanLeadingSpaces(row[colIdx] || "-"));
       return [idx + 1, ...formattedCells];
     });
 
