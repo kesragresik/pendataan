@@ -1700,8 +1700,6 @@ function getShortDocTitle(header) {
 window.openDocDetailModal = function (globalRowIdx) {
   hideFloatingDocPopover(true);
   const modal = document.getElementById("docDetailModal");
-  const modalTitle = document.getElementById("modalDocTitle");
-  const modalSubtitle = document.getElementById("modalDocSubtitle");
   const modalBody = document.getElementById("modalDocBody");
 
   if (!modal || !modalBody) return;
@@ -1723,9 +1721,6 @@ window.openDocDetailModal = function (globalRowIdx) {
   const ketColIdx = state.rawHeaders.findIndex(h => /jika belum lengkap|dokumen.*kurang|keterangan.*dokumen/i.test(h));
   const ketKurang = (ketColIdx !== -1 && row[ketColIdx]) ? cleanLeadingSpaces(row[ketColIdx]).trim() : "";
   const hasKetKurang = Boolean(ketKurang && ketKurang !== "-" && !/^(tidak ada|nihil|lengkap|-)$/i.test(ketKurang));
-
-  if (modalTitle) modalTitle.textContent = namaTempat;
-  if (modalSubtitle) modalSubtitle.textContent = `${jenis} • Ds. ${desa}, Kec. ${kec}`;
 
   let docCardsHtml = "";
   if (state.extraHeaders && state.extraHeaders.length > 0) {

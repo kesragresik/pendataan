@@ -385,46 +385,35 @@ body {
 }
 
 .stat-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 33px;
+  height: 33px;
 }
 
 .stat-icon.total {
-  background-color: rgba(16, 185, 129, 0.12);
   color: var(--primary-600);
 }
 
 .stat-icon.filtered {
-  background-color: rgba(37, 99, 235, 0.12);
   color: var(--accent-blue);
 }
 
 .stat-icon.sync {
-  background-color: rgba(217, 119, 6, 0.12);
   color: var(--accent-amber);
 }
 
-.stat-icon.berkas-lengkap,
-.stat-icon.persen-lengkap {
-  background-color: rgba(16, 185, 129, 0.12);
+.stat-icon.berkas-lengkap {
   color: #059669;
 }
 
-[data-theme="dark"] .stat-icon.berkas-lengkap,
-[data-theme="dark"] .stat-icon.persen-lengkap {
-  background-color: rgba(16, 185, 129, 0.2);
+[data-theme="dark"] .stat-icon.berkas-lengkap {
   color: #34d399;
 }
 
-.stat-icon.berkas-belum,
-.stat-icon.persen-belum {
-  background-color: rgba(245, 158, 11, 0.12);
+.stat-icon.berkas-belum {
   color: #d97706;
 }
 
-[data-theme="dark"] .stat-icon.berkas-belum,
-[data-theme="dark"] .stat-icon.persen-belum {
-  background-color: rgba(245, 158, 11, 0.2);
+[data-theme="dark"] .stat-icon.berkas-belum {
   color: #fbbf24;
 }
 
@@ -1924,12 +1913,10 @@ td.col-jenis {
 
 /* 2. Stat Icon Kemenag */
 .stat-icon.kemenag {
-  background-color: rgba(5, 150, 105, 0.12);
   color: var(--primary-600);
 }
 
 [data-theme="dark"] .stat-icon.kemenag {
-  background-color: rgba(16, 185, 129, 0.18);
   color: #34d399;
 }
 
@@ -2307,16 +2294,6 @@ td.col-jenis {
 /* ==========================================================================
    METRIK & PILL KELENGKAPAN BERKAS KECAMATAN AKTIF
    ========================================================================== */
-.stat-icon.kelengkapan {
-  background-color: rgba(16, 185, 129, 0.14);
-  color: #059669;
-}
-
-[data-theme="dark"] .stat-icon.kelengkapan {
-  background-color: rgba(16, 185, 129, 0.22);
-  color: #34d399;
-}
-
 .text-emerald {
   color: #059669 !important;
 }
@@ -2530,13 +2507,13 @@ td.col-jenis {
 }
 
 .popover-doc-status.ada {
-  background-color: rgba(16, 185, 129, 0.12);
-  color: #059669;
+  background-color: #10b981;
+  color: #ffffff;
 }
 
 .popover-doc-status.tidak {
-  background-color: rgba(239, 68, 68, 0.12);
-  color: #dc2626;
+  background-color: #ef4444;
+  color: #ffffff;
 }
 
 .popover-doc-status.link {
@@ -2547,14 +2524,6 @@ td.col-jenis {
 .popover-doc-status.other {
   background-color: rgba(100, 116, 139, 0.12);
   color: #475569;
-}
-
-[data-theme="dark"] .popover-doc-status.ada {
-  color: #34d399;
-}
-
-[data-theme="dark"] .popover-doc-status.tidak {
-  color: #f87171;
 }
 
 [data-theme="dark"] .popover-doc-status.link {
@@ -2599,6 +2568,7 @@ td.col-jenis {
     opacity: 0;
     transform: scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -2619,7 +2589,7 @@ td.col-jenis {
 }
 
 .doc-modal-header {
-  padding: 1.15rem 1.4rem;
+  padding: 0.7rem 1.4rem;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
@@ -2634,34 +2604,10 @@ td.col-jenis {
   gap: 0.85rem;
 }
 
-.doc-modal-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-md);
-  background-color: rgba(5, 150, 105, 0.12);
-  color: var(--primary-600);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.doc-modal-icon svg {
-  width: 22px;
-  height: 22px;
-}
-
 .doc-modal-title {
   font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--text-main);
-  line-height: 1.25;
-}
-
-.doc-modal-subtitle {
-  font-size: 0.8rem;
-  color: var(--text-muted);
   font-weight: 500;
+  line-height: 1.25;
 }
 
 .doc-modal-close {
@@ -2718,14 +2664,14 @@ td.col-jenis {
 }
 
 .doc-place-name {
-  font-size: 1rem;
-  font-weight: 800;
+  font-size: 1.75rem;
+  font-weight: 600;
   color: var(--text-main);
 }
 
 .doc-place-meta {
   font-size: 0.785rem;
-  color: var(--text-muted);
+  color: var(--text-main);
   display: flex;
   flex-wrap: wrap;
   gap: 0.85rem;
